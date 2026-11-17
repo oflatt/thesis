@@ -53,6 +53,28 @@ spacing. It replaces the dissertation's `book` layout, double spacing,
 degree-submission front matter, and chapters with an exam cover and sections.
 It contains no dissertation prose and is not an official UW template.
 
+## Example general-exam reports
+
+Downloaded November 17, 2026, and checked that both PDFs identify themselves
+as UW general-exam reports:
+
+- [Brandon Holt, *Mitigating Contention in Distributed Systems*](resources/holt-2015-generals.pdf)
+  (32 pages). His [CV](https://bholt.org/cv.html) dates the exam to December 2015;
+  the hosted PDF was generated in August 2016.
+  [Original PDF](https://bholt.github.io/gen/generals.pdf).
+  A useful example of thematic related work followed by completed research
+  and proposed work, particularly Sections 6–8.
+- [Jonathan Aldrich, *Evaluating Module Systems for Crosscutting Concerns*](resources/aldrich-2000-generals.pdf)
+  (September 28, 2000; 23 pages).
+  [Original PDF](https://www.cs.cmu.edu/~aldrich/papers/generals.pdf).
+  An older, survey-style example that compares approaches against common
+  challenges and discusses future research.
+
+Use these as examples of writing and organization; their lengths and formats
+do not replace the current handbook or the chair's charge. A renewed public
+search did not locate Max Willsey's general-exam report; the source linked
+above is his dissertation.
+
 ## UW guidance and open context
 
 The user supplied PDF exports of both internal pages on November 17, 2026:

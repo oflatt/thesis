@@ -1,32 +1,17 @@
-\draftnote{Summarize the research problem, thesis claim, main contributions,
-and work proposed to complete the dissertation.}
+E-graphs power state-of-the-art program optimizers, synthesizers, and verifiers
+  across a variety of domains.
+Through equality saturation, they explore large spaces of equivalent programs,
+  eliminating dependence on rewrite order.
+Despite these successes, e-graphs face numerous challenges
+  when used in more general settings.
+Programs optimized by e-graphs may contain effectful computations,
+  binders, and control-flow constructs.
+Applications may also require proofs,
+  either to establish correctness or to explain their results.
 
-E-Graphs power state-of-the art...
-These applications benefit from the e-graph's
-  efficient exploration of a large space of equivalences,
-  solving (circumventing?) the phase-ordering problem.
-Despite these successes, e-graphs
-  face numerous challenges when used in more general
-  settings.
-Programs optimized by the e-graph may
-  contain effectful computations,
-  contain binders,
-  and control flow constructs.
-In high-trust settings, proof certificates
-  may also be required.
-This work presents a practical set of 
-  semantic extensions to the e-graph 
-  that tackle these issues.
-This leads to the thesis claim:
-  extended e-graphs are practical in general settings,
-  including verified compilers for general programs with effects.
-Along the way we'll encounter several
-  NP-hard problems and show how 
-  designing parameterized algorithms
-  leads to performant solutions.
-
-
-
-
-
-
+This thesis presents semantic extensions to e-graphs that address these challenges.
+Its central claim is that \textbf{extended e-graphs can provide a practical foundation
+  for program reasoning and transformation, including verified compilation
+  of effectful programs}.
+Along the way, we'll encounter several NP-hard problems and show how
+  designing parameterized algorithms leads to performant solutions.
