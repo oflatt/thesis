@@ -1,0 +1,61 @@
+\documentclass[12pt,letterpaper]{article}
+
+\input{preamble}
+\input{metadata}
+
+\hypersetup{
+  pdftitle={\reporttitle},
+  pdfauthor={\reportauthor},
+  pdfsubject={Ph.D. General Examination Report}
+}
+
+\begin{document}
+
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+  \centering
+  {\large University of Washington\par}
+  {\large Paul G. Allen School of Computer Science \& Engineering\par}
+  \vfill
+  {\Huge\bfseries \reporttitle\par}
+  \vspace{1.5em}
+  {\Large \reportauthor\par}
+  \vspace{1.5em}
+  {\large Ph.D. General Examination Report\par}
+  \vfill
+  {\large \reportdate\par}
+  \reporttime\enspace\textperiodcentered\enspace\reportlocation\par
+  \vspace{2em}
+  \textbf{Supervisory Committee}\par
+  \vspace{0.75em}
+  \reportcommittee
+  \vfill
+\end{titlepage}
+
+\pagenumbering{roman}
+\hypersetup{pageanchor=true}
+\begin{abstract}
+  \input{sections/abstract}
+\end{abstract}
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+% Content structure follows UW's Thesis Proposal Style sample charge.
+% Default target: <= 20 pages excluding references, about half related work.
+% Revise to match the chair's individual charge when available.
+\input{sections/introduction}
+\input{sections/related-work}
+\input{sections/proposed-work}
+\input{sections/conclusion}
+
+% After adding the first entry to references.bib and citing it with \cite{key},
+% uncomment the following block. Keeping it disabled lets the empty scaffold
+% compile without BibTeX's "no citation commands" error.
+% \clearpage
+% \phantomsection
+% \addcontentsline{toc}{section}{References}
+% \bibliographystyle{alpha}
+% \bibliography{references}
+
+\end{document}

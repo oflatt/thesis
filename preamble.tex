@@ -1,0 +1,37 @@
+% Typography follows Max Willsey's dissertation source:
+% https://github.com/mwillsey/thesis/blob/68a8459d41a166bbd5d336e0aeeda5b2a72f9cc5/thesis.tex
+% This is a new article scaffold, not Max's general-exam report or an official
+% UW template. See README.md for provenance and the changes in format.
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amsthm}
+\usepackage{libertine}
+\usepackage[libertine]{newtxmath}
+\usepackage[scaled=.85]{DejaVuSansMono}
+\usepackage{microtype}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{hidelinks}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+% Draft prompts are visible in the initial PDF. Replace them with report text.
+% Use \draftnotesfalse to hide prompts when reviewing a developed draft.
+\newif\ifdraftnotes
+\draftnotestrue
+\newcommand{\draftnote}[1]{%
+  \ifdraftnotes
+    \par\noindent{\color{black!60}\small\textit{[Draft: #1]}}\par
+  \fi
+}
+
+\renewcommand{\sectionautorefname}{Section}
+\renewcommand{\subsectionautorefname}{Section}
