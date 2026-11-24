@@ -1,0 +1,19 @@
+% Simplified from ../extended-egglog-paper/drawnfigures/architecture.tex.
+% New layout and labels; the pass order follows the paper.
+\begin{tikzpicture}[
+    font=\small,
+    stage/.style={draw, rounded corners=2pt, align=center,
+      minimum width=3.15cm, minimum height=1.1cm, inner sep=4pt},
+    flow/.style={-{Latex[length=2.2mm]}, thick}]
+  \node[stage, fill=orange!12] (slotted) at (0,0)
+    {Slotted pass\\\footnotesize Renaming rules};
+  \node[stage, fill=blue!8] (congruence) at (3.85,0)
+    {Congruence pass\\\footnotesize Equality rules};
+  \node[stage, fill=green!10] (proof) at (7.7,0)
+    {Proof pass\\\footnotesize Logging rules};
+  \node[stage, fill=black!4] (core) at (11.55,0)
+    {Core engine\\\footnotesize No built-in equality};
+  \draw[flow] (slotted) -- (congruence);
+  \draw[flow] (congruence) -- (proof);
+  \draw[flow] (proof) -- (core);
+\end{tikzpicture}

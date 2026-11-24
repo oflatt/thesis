@@ -1,42 +1,358 @@
-\section{Proposed Work}
+\section{Remaining Work: Verified Compilation}
 \label{sec:proposed-research}
 
-\draftnote{Describe a concrete dissertation plan. Identify the status of each
-part, with brief summaries of completed work and more detailed plans for
-remaining work.}
+% Source: Oliver's research plan and status update, November 20, 2026.
+\sourcenote{New: proposed library and connection to the preceding projects.}
+The preceding projects supply small proofs, effect-safe extraction,
+  and support for proofs involving analyses and variable binding.
+Using them in a verified compiler still requires a connection between
+  the optimizer's certificates and the semantics of the programs it transforms.
+The remaining work is a library that makes this connection reusable:
+  developers supply a language and proved theorems in Lean or Rocq,
+  and the library supplies an \texttt{egglog} optimizer whose results are checked at compiler runtime.
 
-\input{sections/research-progress}
+% Sources: Oliver's status update; ../extended-proofs/semantics/ENCODING.md,
+% Proof status; EgglogSemantics/Proofs/SourceProof/Soundness.lean.
+\sourcenote{New: completed checker and remaining integration, from Oliver's research plan.}
+The Lean proof-checker prototype and its soundness proof for the supported fragment are complete.
+The missing work is the round trip: exporting proved rules, running \texttt{egglog},
+  and validating its returned program and certificate.
+The initial implementation targets Lean, where the prototype exists;
+  a Rocq application requires a corresponding verified interface.
 
-\subsection{Remaining Challenges and Approach}
-\label{sec:proposed-approach}
+\subsection{Background: Verified Compilation}
+\label{sec:background-verification}
 
-\draftnote{Describe the main challenges, required innovations, and how you
-will address them. Connect each project to the hypotheses or goals. Explain
-the strengths and weaknesses of the approach, including what it can and
-cannot do, in enough detail for the committee to assess feasibility.}
+% Primary source: Leroy, A Formally Verified Compiler Back-end, JAR 2009.
+\sourcenote{New background synthesis: compiler correctness and CompCert.}
+A compiler correctness theorem states that successful compilation preserves
+  the source program's observable behavior.
+Proof assistants such as Lean and Rocq check this argument against formal language semantics.
+CompCert is a verified compiler that composes correctness proofs for individual passes
+  into a theorem relating source and target programs~\cite{compcert-backend}.
+
+% Primary sources: Necula, PLDI 2000; Tristan and Leroy, PLDI 2009.
+\sourcenote{New background synthesis: translation validation and verified validators.}
+\emph{Translation validation} checks each compilation result against its input~\cite{translation-validation}.
+The optimizer produces a candidate output, and a validator checks
+  that the transformation preserves program behavior.
+A verified validator has a soundness theorem establishing that every accepted transformation is correct.
+Such validators already run as executable components of CompCert,
+  allowing optimization heuristics to remain unverified~\cite{verified-lazy-code-motion}.
+
+\subsection{A Library for Verified Optimization}
+\label{sec:verified-compilation}
+\label{sec:lean}
+
+% Source: Oliver's November 20 research plan and clarification of the congruence
+% relation and developer-supplied IR checks. This interface remains proposed.
+\sourcenote{New proposed design: definitions and proofs supplied by the developer.}
+The developer defines an intermediate representation and its semantics,
+  and chooses a congruence relation $\simeq$ for the optimizer's equalities,
+  with proofs of its laws.
+This relation must be reflexive, symmetric, and transitive,
+  and preserved by every term constructor.
+These laws justify the equality reasoning performed by \texttt{egglog}:
+  replacing a child by a related term produces a related enclosing term.
+The developer registers theorems justifying rewrites and analysis rules,
+  and supplies IR-specific validity checks with proofs of their soundness.
+
+% Source: Oliver's proposed theorem-to-rule interface; formal shape proposed here.
+\sourcenote{New proposed design: exporting registered theorems as rules.}
+The library exports each supported rewrite theorem as an \texttt{egglog} rule,
+  avoiding a handwritten rule maintained separately from its justification.
+The initial interface supports conditional equalities of the form
+\[
+  \forall\vec{x},\quad
+  P_1(\vec{x})\land\cdots\land P_n(\vec{x})
+  \;\Longrightarrow\;
+  \ell(\vec{x})\simeq r(\vec{x}),
+\]
+where $\vec{x}$ names the pattern variables and each $P_i$ is a precondition.
+The exported rule matches $\ell$, requires evidence for the preconditions,
+  and adds the equality with $r$.
+For example, the summation theorem in Equation~\ref{eq:distribution-rule}
+  exports a distribution rule guarded by $\mathtt{NotFree}$.
+This interface supports a declared fragment of theorems;
+  translating arbitrary Lean or Rocq propositions into rewrite rules is outside the initial scope.
+
+% Source: Oliver's deployment plan; report Sections 3--5.
+\sourcenote{New proposed design: compiler construction and runtime validation.}
+The library also uses the registered theorems and IR-specific checks to instantiate an executable validator.
+The proof assistant checks the theorems and the validator's correctness once,
+  when the compiler is built (Figure~\ref{fig:verified-compilation-pipeline}, upper row).
+For each input program, the compiler encodes the program for \texttt{egglog},
+  runs search, and extracts a candidate (lower row).
+Proof production supplies a certificate relating the input to that candidate.
+The validator checks the certificate and IR-specific conditions,
+  and the compiler accepts the candidate only if these checks succeed.
+Here runtime means compiler execution, not execution of the generated program.
+These per-input runs do not invoke the proof assistant.
+
+% Source: Oliver's clarification of the verification boundary.
+\sourcenote{New: benefit of using an unverified optimizer with a verified checker.}
+\texttt{Egglog}'s implementation remains unverified.
+It supplies candidate programs and certificates, which the verified checker validates
+  against the registered theorems.
+This allows a verified compiler to use \texttt{egglog}'s substantial body of unverified code,
+  including its query engine, scheduling, and search optimizations,
+  without proving that implementation correct.
+
+% New diagram of Oliver's proposed framework; no source paper claims this design.
+\begin{figure}[htbp]
+  \sourcenote{New diagram of the proposed library and compiler workflow.}
+  \centering
+  \input{figures/verified-compilation-pipeline}
+  \caption{Proposed division of work for a supported language interface.
+    The compiler developer supplies the definitions and proofs at upper left;
+    the library automatically exports rules, instantiates the validator,
+    and derives the pass theorem.
+    For each user-supplied input program, search, extraction, proof production,
+    and validation are automatic.
+    The generated rules guide the unverified \texttt{egglog} engine,
+    and the validator combines certificate checking with checks supplied for the IR,
+    such as effect safety.}
+  \label{fig:verified-compilation-pipeline}
+\end{figure}
+
+\subsection{Correctness and the Round Trip}
+\label{sec:verified-round-trip}
+
+% Source: Oliver's requested compiler-runtime correctness theorem;
+% notation and statement are proposed here.
+\sourcenote{New proposed theorem: correctness of accepted compilation results.}
+The library's main theorem connects acceptance by the validator to program semantics.
+Fix a library $R$ of registered rules with their semantic proofs.
+Let $p$ be a well-formed input, $q$ a candidate output, and $\pi$ its certificate.
+Acceptance must establish that the two programs are related by the chosen congruence:
+\begin{equation}
+  \operatorname{validate}_{R}(p,q,\pi)=\mathsf{true}
+  \quad\Longrightarrow\quad
+  p\simeq q.
+  \label{eq:validator-soundness}
+\end{equation}
+If checking fails, an optimization pass can return its unchanged input;
+  a pass between different languages must instead report failure or use an independently justified fallback.
+Connecting $\simeq$ to the language's semantics gives the compiler's behavior-preservation theorem.
+
+% Source: Oliver's clarification that the semantic bridge needs investigation;
+% existing proposal's requirement to support executions that stop before saturation.
+\sourcenote{New open question: connecting the existing checker theorem to program semantics.}
+The existing checker theorem concerns consequences of \texttt{egglog} rules
+  in an e-graph closed under those rules (Section~\ref{sec:extension-correctness}).
+Connecting that theorem to the semantic relation $\simeq$ requires further investigation.
+The semantic argument must also hold when search stops at a time or size limit,
+  without assuming that \texttt{egglog} reached saturation.
+The proof and any changes needed to the formalization are part of the proposed work.
+
+% Source: Oliver's clarification that analysis facts must be checked for specific
+% terms, with the interpretation and implementation still open.
+\sourcenote{New proposed work: interpreting and checking proofs of analysis facts.}
+This semantic connection must also account for the analysis premises of conditional rewrites.
+\texttt{Egglog}'s proof production from Section~\ref{sec:extension-proofs}
+  supplies derivations of these facts as well as equalities.
+The verified interface must establish each analysis premise for the specific terms
+  used by the rewrite.
+This part of the verified interface remains to be designed and implemented.
+
+% Source: Oliver's proposed round trip; source-rule identity and export checks
+% remain proposed features, not implemented parts of the prototype.
+\sourcenote{New proposed design: correspondence between theorems and exported rules.}
+The round trip must preserve the connection between exported rules and their registered theorems.
+Each exported rule carries an identifier for its registered theorem.
+A certificate names that rule, its substitution, and proofs of its premises.
+The checker validates the rule instance and its premises against the registered rule.
+The library must also justify the translation from theorem syntax into the checker's rule representation,
+  for example by generating a correspondence proof checked when the optimizer is built.
+
+% Source: Oliver's proposed integration; Section 5 checker scope.
+\sourcenote{New proposed proof obligations: representation and certificate boundaries.}
+The certified terms must also correspond to the compiler's input and output programs.
+Encoding must preserve the input program's meaning;
+  certificate import must preserve rule identities and substitutions;
+  and decoding must connect the certified output term to the program actually returned.
+The validator must reject malformed or ill-typed results and certificates for different endpoints.
+
+% Source: Oliver's clarification that effect-safety checking is IR-specific.
+\sourcenote{New proposed design: effect-safety checks supplied by the compiler developer.}
+For an effectful IR, decoding also requires a valid ordering of effects.
+The compiler developer supplies an effect-safety checker
+  and a proof that it accepts only programs with valid effect ordering.
+The runtime validator checks both the equality certificate and this IR-specific condition,
+  allowing extraction itself to remain unverified.
+
+% Source: proposed deployment boundary; no new trust-free execution claim.
+\sourcenote{New proposed design: execution assumptions and deployment.}
+The deployment argument must also account for how the verified validator becomes executable code.
+This includes assumptions about code generation, the runtime, and communication with \texttt{egglog}.
+
+\subsection{Candidate Case Studies}
+\label{sec:verified-case-studies}
+
+% Source: Oliver's three candidates; primary sources cited in each row.
+% CompCert: https://compcert.org/doc/ (RTL, passes, and static analyses).
+% NetKAT: Anderson et al., POPL 2014; KATch: Moeller et al., PLDI 2024.
+% Luminal: https://github.com/luminal-ai/luminal and
+% https://blog.luminal.com/p/compiling-models-to-megakernels.
+% Effectful Luminal scope and NetKAT limitation clarified by Oliver after review.
+\sourcenote{New comparison of Oliver's candidate case studies;
+  existing systems from their papers and documentation, proposed pass scopes added.}
+The case study must demonstrate both a correctness theorem and a useful optimization.
+The candidates in Table~\ref{tab:compiler-cases} are alternatives for one main case study.
+Selection depends on available semantics, integration effort, and useful optimizations
+  that exercise analysis premises and, where applicable, effect-safe extraction.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{@{}p{0.17\linewidth}p{0.78\linewidth}@{}}
+    \toprule
+    Candidate & Proposed scope and main tradeoff \\
+    \midrule
+    CompCert &
+    Optimize arithmetic and memory operations within a basic block
+      (a straight-line instruction sequence) of its register-based RTL representation~\cite{compcert-doc}.
+    This directly tests effectful optimization in a verified pipeline,
+      but requires a Rocq checker interface and proofs connecting RTL to the extraction representation. \\[6pt]
+    NetKAT &
+    NetKAT is a language for packet-processing policies~\cite{netkat}.
+    Simplify its policies by eliminating redundant tests and branches, initially excluding iteration.
+    Its equational theory supports theorem export; KATch supplies benchmarks and an independent
+      equivalence checker~\cite{katch}.
+    Measure policy size and downstream compilation cost.
+    Its drawback for this thesis is that it does not need effect-safe extraction. \\[6pt]
+    Luminal &
+    Luminal uses \texttt{egglog} to optimize tensor computations~\cite{luminal,luminal-megakernels}.
+    Verify an effectful tensor-IR pass that needs effect-safe extraction,
+      together with proofs of shape and bounds conditions.
+    Compare overhead and generated-program performance on the same models.
+    The theorem covers a selected pass, with explicit numerical semantics:
+      real-number equalities do not justify arbitrary floating-point reassociation.
+    GPU backend verification is separate. \\
+    \bottomrule
+  \end{tabular}
+  \caption{Alternative case studies for the verified-optimization library.}
+  \label{tab:compiler-cases}
+\end{table}
 
 \subsection{Evaluation Plan}
 \label{sec:evaluation}
 
-\draftnote{Specify how the claims will be evaluated: proofs, experiments,
-benchmarks, baselines, case studies, or other evidence. State success criteria
-and relevant limitations.}
+% Source: Oliver's goals for a reusable framework and a practical case study.
+\sourcenote{New evaluation plan: correctness, automation, and developer effort.}
+The evaluation asks whether the library makes useful optimizations easier to verify and deploy.
+The formal deliverable is Equation~\ref{eq:validator-soundness}
+  instantiated for the selected pass and composed with its compiler interface.
+To assess reuse, the study adds a rewrite and an analysis rule after initial integration,
+  measuring the additional definitions, proofs, and adapter code required.
+These additions should reuse the generic checker proof and runtime integration.
+Malformed certificates, missing premises, and mismatched endpoints provide negative integration tests.
 
-\subsection{Dissertation Outline, Timeline, and Risks}
-\label{sec:timeline}
+% Source: Oliver's runtime-checking proposal and prior evaluation plan.
+\sourcenote{New evaluation plan: runtime costs and optimization benefit.}
+Measurements separate compiler construction from per-input costs:
+  search, extraction, proof recording, reconstruction, minimization, and checking.
+Runs with and without validation isolate its overhead;
+  comparisons with proof-term reconstruction use the same transformations and semantic claims
+  where both systems support them.
+The study also reports certificate size, peak memory, validation failures,
+  and the performance or code size of accepted outputs relative to the existing compiler.
+Accepting unchanged programs establishes correctness but does not demonstrate optimization benefit.
 
-We'll want to talk about all of these at some point, helpfulf or outline: 
-- proof production for e-graphs including analysis
-- verified proof checker and frameowrk for using egraphs in lean (unfinished)
-- effect-safe extraction
-- extensions via compilation
-- slotted e-graphs (also via compilation)
-- contexts? Unpublished but fleshed out in drafts of eggcc paper
+% Source: existing report evaluation plan; Small Proofs and eggcc structural parameters.
+\sourcenote{New evaluation plan for the parameterized-algorithm contribution.}
+The evaluation records the structure that drives proof and extraction costs:
+  proof-graph size, the number of congruence justifications, and statewalk width
+  for workloads using effect-safe extraction.
+Inputs of similar size but different parameter values test how well these measures explain runtime.
+Varying the greedy proof-search budget measures the tradeoff between minimizing certificates
+  and checking them.
+Analyses and renaming introduce additional proof steps,
+  so their counts are recorded separately rather than assuming that congruence alone explains the cost.
+These experiments test whether the benefits from Sections~\ref{sec:proofs} and~\ref{sec:effectful-extraction}
+  persist in the integrated compiler.
 
+\subsection{Scope and Completion Criteria}
+\label{sec:contexts}
 
-\draftnote{Give the proposed dissertation chapters and a feasible schedule
-for completing the remaining work. Identify milestones, dependencies, risks,
-and alternatives. UW's sample charge asks the committee to assess whether
-the remaining work can plausibly be completed within the next year; explain
-the basis for the proposed schedule. Revise to match the advisor's charge
-when it is available.}
+% Source: Oliver's completion status and case-study alternatives;
+% dependency ordering and scope are new proposal text.
+\sourcenote{New research plan: remaining milestones and scope.}
+The work proceeds through three milestones.
+First, connect the existing Lean checker to \texttt{egglog} on a small language,
+  completing theorem export and certificate import for a conditional rewrite whose premise comes from an analysis.
+Second, package the interface as a library and establish the round-trip correctness theorem.
+Third, integrate one case study and measure validation cost, optimization benefit, and extension effort.
+The first milestone provides a concrete test of the interface before committing to a larger compiler.
+
+% Source: proposed limits and contingency plan, based on Oliver's candidates.
+\sourcenote{New research plan: limits and contingencies.}
+The project will integrate the library with one proof assistant
+  and evaluate it in a substantive compiler case study.
+Supporting both Lean and Rocq, every \texttt{egglog} primitive,
+  or extensions beyond those in Section~\ref{sec:extensions} is optional.
+If a candidate's semantics makes integration too large, a smaller pass must still
+  retain conditional rewrites and a useful optimization target.
+If certificates dominate compilation time, minimization and sharing become evaluation priorities.
+The evaluation must identify which parts of the thesis the chosen study exercises.
+
+\subsection{Related Work}
+\label{sec:related-verified-compilation}
+
+% Primary sources: Tristan and Leroy, PLDI 2009, especially Sections 4 and 8;
+% Rideau and Leroy, CC 2010.
+\sourcenote{New literature synthesis: verified validation of lazy code motion
+  and register allocation.}
+Tristan and Leroy's CompCert validator checks lazy code motion,
+  an optimization that moves computations to avoid repeated work~\cite{verified-lazy-code-motion}.
+Its checks include whether moving a potentially failing computation changes program behavior.
+Rideau and Leroy validate assignments of program values to registers or memory
+  with a verified dataflow analysis~\cite{validated-register-allocation}.
+These systems already separate optimization heuristics from correctness
+  and check properties needed by effectful transformations.
+Our proposed checker instead validates derivations assembled from registered rewrite and analysis rules,
+  enabling reuse across optimizations.
+
+% Primary sources: Tatlock and Lerner, PLDI 2010; Gross et al., ITP 2022.
+\sourcenote{New literature synthesis: extensible verified compilers and theorem-driven rewriting.}
+XCert extends CompCert with a verified engine for optimizations expressed in a dedicated language~\cite{xcert}.
+Gross and colleagues compile proved Coq theorems into executable rewriters for Fiat Cryptography~\cite{verified-rewriting}.
+Both reduce proof effort through reusable infrastructure.
+Our proposed library applies that goal to \texttt{egglog}'s equality saturation and analyses,
+  leaving search unverified and checking certificates at compiler runtime.
+Its contribution depends on the supported rule interface, analysis premises,
+  and practical integration and validation costs.
+
+% Primary sources: Stepp, Tate, and Lerner, CAV 2011; Lopes et al., PLDI 2021.
+\sourcenote{New literature synthesis: Peggy's LLVM validator and Alive2.}
+Peggy's validator for LLVM's intermediate representation searches for equalities
+  between original and optimized programs, including their memory operations~\cite{llvm-translation-validation}.
+Alive2 uses satisfiability modulo theories (SMT) solvers to check that the transformed program
+  introduces no behavior forbidden by the original, considering loops up to a bounded number of iterations~\cite{alive2}.
+In our proposed compiler, the optimizer records a certificate during search,
+  and a verified checker validates it after extraction.
+The certificate must justify analysis-dependent rewrites,
+  and the compiler's correctness argument must connect the certified equality to the executable output.
+
+% Primary sources: Rossel et al., POPL 2026, Section 5;
+% Bourgeat's dissertation, 2023, Section 7.2; Ekici et al., CAV 2017, Section 1.
+\sourcenote{New literature synthesis: Lean's \texttt{egg} tactic,
+  Rocq's Coquetier, and SMTCoq.}
+Lean's \texttt{egg}~\cite{lean-egg} and Rocq's Coquetier~\cite{coquetier}
+  are tactics, procedures that help construct proofs.
+They reconstruct native proof terms from \texttt{egg}'s explanations.
+SMTCoq instead evaluates a verified certificate checker inside Rocq
+  and applies its soundness theorem~\cite{smtcoq}.
+Our proposed library follows the verified-checker approach but runs the compiled validator
+  during compilation, without constructing a new proof-assistant proof term for every input.
+Performance comparisons must account for certificate production and checking
+  as well as the tactics' proof reconstruction.
+
+% Primary source: https://adam.chlipala.net/papers/EgraphsPOPL27/
+% Only the authors' abstract is available; rechecked 2026-11-20.
+\sourcenote{New literature synthesis: Jamner and colleagues' forthcoming work,
+  based on the authors' published abstract.}
+Jamner and colleagues' forthcoming work verifies an \texttt{egglog}-style
+  equality-saturation procedure in Rocq, eliminating certificates~\cite{verified-egraphs}.
+Our architecture leaves search unverified, allowing heuristics and schedules to change
+  independently of the checker as long as they produce supported certificates.
+Both approaches can yield executable tools; they place the proof obligation on different components.

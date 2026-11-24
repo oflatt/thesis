@@ -1,17 +1,18 @@
 E-graphs power state-of-the-art program optimizers, synthesizers, and verifiers
-  across a variety of domains.
+  across a variety of domains~\cite{egg,szalinski,caviar}.
 Through equality saturation, they explore large spaces of equivalent programs,
-  eliminating dependence on rewrite order.
+  eliminating dependence on rewrite order~\cite{peggy}.
 Despite these successes, e-graphs face numerous challenges
   when used in more general settings.
 Programs optimized by e-graphs may contain effectful computations,
-  binders, and control-flow constructs.
+  binders, and control-flow constructs~\cite{eggcc,slotted-egraphs}.
 Applications may also require proofs,
-  either to establish correctness or to explain their results.
+  either to establish correctness~\cite{eggproof}
+  or to explain their results~\cite{herbie-proofs}.
 
 This thesis presents semantic extensions to e-graphs that address these challenges.
-Its central claim is that \textbf{extended e-graphs can provide a practical foundation
-  for program reasoning and transformation, including verified compilation
+Its central claim is that \textbf{extended e-graphs are practical and beneficial 
+  for program reasoning, including verified compilation
   of effectful programs}.
 Along the way, we'll encounter several NP-hard problems and show how
   designing parameterized algorithms leads to performant solutions.

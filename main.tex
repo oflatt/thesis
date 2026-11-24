@@ -37,25 +37,31 @@
 \begin{abstract}
   \input{sections/abstract}
 \end{abstract}
+% Keep the report contents compact; project details appear within each section.
+\setcounter{tocdepth}{1}
 \tableofcontents
 \clearpage
 
 \pagenumbering{arabic}
-% Content structure follows UW's Thesis Proposal Style sample charge.
-% Default target: <= 20 pages excluding references, about half related work.
+% Thesis-centered project sections follow Gus Henry Smith's proposal example.
+% Content requirements follow UW's Thesis Proposal Style sample charge.
+% Sample charge: <= 20 pages excluding references, about half related work.
+% Current drafting target: low twenties, preserving clarity (Oliver, Nov. 20).
+% Shared foundations precede specialized background and related work in each project.
 % Revise to match the chair's individual charge when available.
 \input{sections/introduction}
 \input{sections/related-work}
+\input{sections/proofs}
+\input{sections/effectful-extraction}
+\input{sections/extensions}
 \input{sections/proposed-work}
+\input{sections/timeline}
 \input{sections/conclusion}
 
-% After adding the first entry to references.bib and citing it with \cite{key},
-% uncomment the following block. Keeping it disabled lets the empty scaffold
-% compile without BibTeX's "no citation commands" error.
-% \clearpage
-% \phantomsection
-% \addcontentsline{toc}{section}{References}
-% \bibliographystyle{alpha}
-% \bibliography{references}
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{References}
+\bibliographystyle{alpha}
+\bibliography{references}
 
 \end{document}

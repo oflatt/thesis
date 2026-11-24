@@ -1,13 +1,236 @@
-\section{Related Work}
+\section{Background}
+\label{sec:background}
 \label{sec:related-work}
 
-% UW's sample charge allocates approximately half the report to related work.
-\draftnote{Organize roughly half the report around themes in the literature.
-Cover both foundational research and alternative approaches. Critically
-evaluate the evidence, assumptions, strengths, and limitations of prior work,
-rather than listing papers or repeating their claims.}
+% Source notes follow the convention in sections/introduction.tex.
+% Shared concepts are drawn from the source papers.
 
-\draftnote{Connect the approaches to one another and to the thesis. Explain
-what is different about the proposed approach, what gap it addresses, and
-why that approach has not been attempted before. Choose thematic subsections
-once the research scope is settled; add verified citations to references.bib.}
+\subsection{E-Graphs and Equality Saturation}
+\label{sec:background-egraphs}
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/02-background.tex,
+% Formal Definition of an Egraph, terms and function symbols.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S2.}
+A \emph{term} has the form $f(t_1,\ldots,t_n)$,
+  where $f$ is a function symbol with $n$ arguments and each $t_i$ is itself a term.
+We call $f$ the term's \emph{head} and the $t_i$ its \emph{children}.
+For example, $\mathtt{Mul}(5,i)$ has multiplication as its head and two children, $5$ and $i$.
+Constants and program-variable names can be represented as symbols with no arguments.
+
+% Sources: ../egg-papers/2026-OOPSLA-eggcc/02-background.tex, term-based definition;
+% ../egg-papers/2022-explanations-fmcad/02-background.tex, opening paragraphs.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S2,
+  and \emph{Small Proofs from Congruence Closure}, \S2.}
+An \emph{e-graph} compactly represents the congruence closure
+  of a set of equalities between terms~\cite{nelson,eggcc}.
+Congruence is the property that $a=b$ implies $f(a)=f(b)$.
+Congruence closure computes the equalities implied by the given equalities and this property.
+Terms known to be equal form \emph{e-classes}.
+An e-class stores some terms explicitly.
+We say it \emph{represents} a term if that term is stored in the class
+  or can be obtained from a stored term by substituting equal terms for its children,
+  repeatedly if needed.
+Merging e-classes records a new equality;
+  congruence closure propagates it to enclosing terms.
+
+% Sources: ../egg-papers/2020-big-paper/02-background.tex, Equality Saturation;
+% ../egg-papers/2026-OOPSLA-eggcc/02-background.tex, rule application and extraction.
+\sourcenote{Edited from \emph{egg}, \S2, and
+  \emph{Efficient Extraction for Effectful E-graphs}, \S2.}
+An equality saturation engine initializes an e-graph with an input expression
+  and repeatedly applies rewrite rules, retaining both sides of each equality~\cite{peggy,egg}.
+A rewrite rule describes an equality between two patterns.
+A pattern is a term with variables that stand for other terms;
+  matching assigns terms to those variables.
+The e-graph is saturated when the rules add no new information.
+Practical executions can also stop at a time or size limit.
+An \emph{extraction} procedure then selects a term represented by the input's e-class,
+  using a cost function such as the number of operators in the term.
+
+% Source: ../extended-egglog-paper/background.tex, nested-sum example.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, background;
+  mathematical example unchanged.}
+As a running example, consider moving a constant factor inside two nested summations:
+\begin{equation}
+  5\cdot\sum_{i=0}^{10}\sum_{j=0}^{10} i\,j
+  \;=\;\sum_{i=0}^{10}\sum_{j=0}^{10} 5\,i\,j.
+  \label{eq:sum-example}
+\end{equation}
+The summations bind $i$ and $j$: each variable ranges from $0$ to $10$ within its sum.
+Considered on its own, the body $i\,j$ has two \emph{free variables}:
+  neither is bound within that expression.
+Moving $5$ inside either sum is valid because it is independent of that sum's variable.
+
+% New diagram of the terms and equalities in ../extended-egglog-paper/background.tex.
+% Equality-edge presentation follows the expression graphs in
+% ../egg-papers/2022-explanations-fmcad/03-explanation-length.tex.
+\begin{figure}[htbp]
+  \sourcenote{New diagram of the running example from
+    \emph{Extended E-Graphs via Compilation}, using equality edges as in
+    \emph{Small Proofs from Congruence Closure}, \S3; new caption.}
+  \centering
+  \input{figures/sum-egraph}
+  \caption{An e-graph after distributing $5$ into both sums.
+    Each node in the e-graph is a term, labeled by its function symbol
+    and pointing to its children via solid arrows.
+    Dashed edges connect equal terms.
+    The two terms in the top row belong to the same e-class.
+    $\Sigma_i b$ abbreviates $\sum_{i=0}^{10}b$, and similarly for $\Sigma_j$;
+    the bound variable is shown in the $\Sigma$ label.
+    Analysis facts (Section~\ref{sec:background-egglog}) are omitted.}
+  \label{fig:background-egraph}
+\end{figure}
+
+% Source: ../extended-egglog-paper/background.tex, the two rewrite rounds;
+% explanation of the new diagram added for this report.
+\sourcenote{New explanation of the diagram, based on
+  \emph{Extended E-Graphs via Compilation}'s running example.}
+Figure~\ref{fig:background-egraph} shows the equalities produced by distribution.
+The top dashed edge records moving $5$ inside the outer sum;
+  the second records moving it inside the inner sum.
+Extraction can choose the top $\Sigma_i$ term and replace its body, the middle multiplication,
+  with the equal right-hand $\Sigma_j$ term, producing $\sum_{i=0}^{10}\sum_{j=0}^{10}5\,i\,j$.
+That complete term has no explicit node in the figure:
+  congruence justifies assembling it from equivalent children.
+
+% Sources: ../egg-papers/2020-big-paper/02-background.tex, E-Graphs;
+% ../egg-papers/2026-OOPSLA-eggcc/02-background.tex, representative terms and e-nodes.
+\sourcenote{Edited from \emph{egg}, \S2, and
+  \emph{Efficient Extraction for Effectful E-graphs}, \S2.}
+Figure~\ref{fig:background-egraph} shows individual terms.
+Implementations use \emph{e-nodes} to store these terms compactly~\cite{egg}.
+An e-node is a function symbol paired with an ordered list of child e-classes.
+Because each child refers to an entire equivalence class,
+  one e-node can represent several terms with the same head and equivalent children.
+
+\subsection{Analyses and \texttt{egglog}}
+\label{sec:background-egglog}
+
+% Source: ../extended-egglog-paper/background.tex, egglog opening and rule semantics.
+% First sentence retained verbatim apart from typography and citation placement.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, background;
+  opening sentence verbatim.}
+\texttt{Egglog} is a language for writing program optimizers over e-graphs~\cite{egglog}.
+An \texttt{egglog} program specifies rewrite rules and analyses
+  that derive equalities and facts about program properties.
+Each rule consists of a \emph{query}, which matches terms and facts already present,
+  and \emph{actions}, which add terms, merge e-classes, or record new facts.
+The engine executes the actions for each match of the query;
+  each such execution is a \emph{rule firing}.
+
+% Sources: ../egg-papers/2020-big-paper/09-related.tex, E-Graphs and E-matching;
+% ../extended-egglog-paper/background.tex, NotFree analysis and distribution rule.
+\sourcenote{Edited from \emph{egg}, \S7, and
+  \emph{Extended E-Graphs via Compilation}, background.}
+Analyses establish properties that can serve as preconditions for rewrites.
+The \texttt{egg} library supports e-class analyses,
+  which attach semantic information to equivalence classes~\cite{egg}.
+In \texttt{egglog}, analysis rules derive facts that other rules can query.
+For our example, the distribution rule is
+\begin{equation}
+  x\cdot\sum_{v=0}^{10} b
+  =\sum_{v=0}^{10} x\cdot b
+  \qquad\text{provided $v$ does not occur free in $x$.}
+  \label{eq:distribution-rule}
+\end{equation}
+An analysis fact $\mathtt{NotFree}(v,x)$ records this precondition:
+  moving $x$ under the sum will not bind a previously free occurrence of $v$ in $x$.
+
+% Source: ../extended-egglog-paper/background.tex, constructor abbreviations.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, background.}
+To express these rules, $\mathtt{Mul}$ multiplies its arguments,
+  and $\SumZeroTen(v,b)$ represents $\sum_{v=0}^{10}b$.
+Numerals and quoted names abbreviate leaves:
+  $5$ stands for $\mathtt{Num}(5)$ and $\texttt{"i"}$ for $\mathtt{Var}(\texttt{"i"})$.
+Italic letters such as $x$, $v$, and $b$ are pattern variables
+  that matching binds to terms in the e-graph;
+  quoted names such as $\texttt{"i"}$ belong to the program being optimized.
+We write $Q\Rightarrow H$ for a rule with query $Q$ and actions $H$.
+The conjunction $\land$ requires both patterns to match with the same variable assignments.
+
+% Source: ../extended-egglog-paper/background.tex, rules and schedules.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, background.}
+A \emph{schedule} controls which rules run and when they repeat.
+The command $\kw{run}\ R$ executes one round of a rule set $R$;
+  $\kw{saturate}\ S$ repeats a schedule $S$ until the e-graph stops changing.
+Each round matches all queries before performing their actions.
+The empty query $\top$ matches even an empty e-graph,
+  allowing the first rule below to initialize it.
+The action $\kw{union}(s,t)$ inserts a new \emph{ground equality} $s=t$ into the e-graph,
+  with pattern variables replaced by their matched terms.
+The command $\kw{check}\ s=t$ tests whether this equality holds in the e-graph.
+Braces enclose rules and actions; semicolons sequence commands.
+
+% Source: ../extended-egglog-paper/background.tex, complete eggprogram block.
+% Commands and comments are unchanged; comments moved above commands and lines rewrapped.
+\begin{samepage}
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, background;
+  complete program and comments retained, with layout adapted.}
+The following program inserts the input, derives the analysis facts,
+  applies distribution, and checks that the result equals the input.
+\begingroup\small
+\begin{eggprogram}
+  &\codecomment{Insert $\textstyle 5\cdot\sum_{i=0}^{10}\sum_{j=0}^{10}i\,j$}&&\\*
+  &\kw{run}\ \{\top\Rightarrow&&\\*
+  &\quad\mathtt{Mul}(5,\,\SumZeroTen(\text{\texttt{"i"}},\,
+    \SumZeroTen(\text{\texttt{"j"}},\,\mathtt{Mul}(\text{\texttt{"i"}},\,\text{\texttt{"j"}}))))\};&&\\[6pt]
+  &\codecomment{Numbers have no free variables}&&\\*
+  &\kw{saturate}\bigl(\kw{run}\ \{\SumZeroTen(v,\,b)\land\mathtt{Num}(n)&&\\*
+  &\quad\Rightarrow\mathtt{NotFree}(v,\,\mathtt{Num}(n))\}\bigr);&&\\[6pt]
+  &\codecomment{Require $x$ to be independent of $v$}&&\\*
+  &\kw{saturate}\bigl(\kw{run}\ \{\mathtt{Mul}(x,\,\SumZeroTen(v,\,b))\land\mathtt{NotFree}(v,\,x)&&\\*
+  &\quad\codecomment{Move the factor inside the sum}&&\\*
+  &\quad\Rightarrow\kw{union}\bigl(\mathtt{Mul}(x,\,\SumZeroTen(v,\,b)),\,
+    \SumZeroTen(v,\,\mathtt{Mul}(x,\,b))\bigr)\}\bigr);&&\\[6pt]
+  &\codecomment{Check distribution into both sums}&&\\*
+  &\kw{check}\ \mathtt{Mul}(5,\,\SumZeroTen(\text{\texttt{"i"}},\,
+    \SumZeroTen(\text{\texttt{"j"}},\,\mathtt{Mul}(\text{\texttt{"i"}},\,\text{\texttt{"j"}}))))&&\\*
+  &\phantom{\kw{check}\ }{}=\SumZeroTen(\text{\texttt{"i"}},\,\SumZeroTen(\text{\texttt{"j"}},\,
+    \mathtt{Mul}(5,\,\mathtt{Mul}(\text{\texttt{"i"}},\,\text{\texttt{"j"}}))))
+\end{eggprogram}
+\endgroup
+\end{samepage}
+
+% Source: ../extended-egglog-paper/background.tex, initialization and rewrite rounds.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, background.}
+The initialization inserts the input and its subterms.
+The analysis rule matches a sum and a numeric literal, deriving
+  $\mathtt{NotFree}(\texttt{"i"},5)$ and $\mathtt{NotFree}(\texttt{"j"},5)$.
+The rewrite rule checks the corresponding analysis fact before distributing the multiplication.
+One rewrite round moves $5$ inside the outer sum; the next moves it inside the inner sum.
+The final $\kw{check}$ succeeds because the two terms belong to the same e-class.
+
+\subsection{Proof Certificates}
+\label{sec:background-certificates}
+\label{sec:related-proofs}
+
+% Source: ../egg-papers/2022-explanations-fmcad/02-background.tex, Congruence Proofs.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S2.}
+A \emph{proof certificate} establishes an equality without reconstructing the e-graph.
+It records equalities that transform one term into the other,
+  applying them at the root or to subterms using congruence~\cite{eggproof}.
+
+% Sources: ../extended-egglog-paper/background.tex, rewrite rounds;
+% ../egg-papers/2022-explanations-fmcad/02-background.tex, proof presentation.
+\begin{samepage}
+\sourcenote{New proof presentation of the \emph{Extended E-Graphs via Compilation}
+  example, following the rewrite-sequence format of \emph{Small Proofs}, \S2.}
+For the running example, two instances of Equation~\ref{eq:distribution-rule}
+  establish the equality:
+\[
+  \begin{aligned}
+    &5\cdot\sum_{i=0}^{10}\sum_{j=0}^{10}i\,j\\[4pt]
+    &\quad\xrightarrow{\text{distribute at }i}
+      \sum_{i=0}^{10}5\cdot\sum_{j=0}^{10}i\,j\\[4pt]
+    &\quad\xrightarrow{\text{distribute at }j}
+      \sum_{i=0}^{10}\sum_{j=0}^{10}5\,i\,j.
+  \end{aligned}
+\]
+\end{samepage}
+
+% Sources: same passages; congruence/transitivity explanation added.
+\sourcenote{New explanation of the proof, based on the two source examples.}
+The first step rewrites the root; the second rewrites its body using congruence.
+Transitivity of equality combines the steps.
+Both require $5$ to be independent of the bound variable;
+  Section~\ref{sec:extension-proofs} shows how to prove those analysis facts.

@@ -1,26 +1,128 @@
 \section{Introduction}
 \label{sec:introduction}
 
-\draftnote{Introduce the problem and explain why it matters. Define the scope
-of ``E-Graphs for Everything'' and the connection between the projects in the
-dissertation.}
+% Source-note convention: Verbatim means unchanged prose apart from formatting;
+% Edited includes condensed or combined source text; New identifies report synthesis.
+% Source: ../egg-papers/2026-OOPSLA-eggcc/01-introduction.tex, opening.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S1.}
+E-graphs power state-of-the-art program optimizers, synthesizers, and verifiers
+  across a variety of domains~\cite{egg,szalinski,caviar}.
+Through \emph{equality saturation}, an optimizer applies semantics-preserving rules
+  to build a space of equivalent programs, then \emph{extracts} one using a cost function~\cite{peggy}.
+By retaining alternatives and separating exploration from extraction, equality saturation
+  lets engineers focus on optimization rules instead of transformation order.
 
-\subsection{Background}
-\label{sec:background}
+% Source: ../egg-papers/2020-big-paper/01-intro.tex ("Ideally...");
+% remaining problem framing from the report abstract and Oliver's proposal.
+\sourcenote{Edited from \emph{egg}, \S1; new problem framing from the research plan.}
+Ideally, a user could simply provide a language grammar and rewrites,
+  and equality saturation would produce an effective optimizer.
+Realizing this ideal requires more than applying rewrites.
+Applications need to justify their results, handle effects and variable binding,
+  and combine rewriting with program analyses.
+These requirements affect the evidence retained during search,
+  the programs extraction can select, and the extensions that must work together.
+A verified optimizer for effectful programs must address them together.
 
-\draftnote{Introduce the overall research area, definitions, and notation
-needed to understand the thesis, including e-graphs and equality saturation
-as appropriate.}
+\sourcenote{Verbatim from the report abstract.}
+This thesis proposal presents semantic extensions to e-graphs that address these challenges.
+Its central claim is that \textbf{extended e-graphs are practical and beneficial
+  for program reasoning, including verified compilation
+  of effectful programs}.
 
-\subsection{Thesis Statement and Goals}
-\label{sec:thesis-statement}
+% Sources: Small Proofs, 04-flattened-optimal.tex and 05-flattened-greedy.tex;
+% eggcc, 01-introduction.tex. Shared theme; each parameter is introduced with its project below.
+\sourcenote{New synthesis of the parameterized-algorithm contributions.}
+These extensions must also be efficient enough to use in optimizers.
+Both proof minimization and effect-safe extraction are NP-hard~\cite{eggproof,eggcc}.
+We develop parameterized algorithms whose cost depends on structural properties of the input
+  as well as its overall size.
+Identifying and controlling these parameters guides the implementation of practical
+  proof generation and extraction.
 
-\draftnote{State the central, defensible claim of the dissertation. Explain
-the hypotheses or goals and what evidence would establish the claim.}
+\subsection{Proof Production and Minimization}
+\label{sec:intro-proofs}
 
-\subsection{Key Ideas and Contributions}
-\label{sec:contributions}
+% Source: ../egg-papers/2022-explanations-fmcad/01-intro.tex;
+% Herbie proof documentation; condensed contribution overview.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S1;
+  explanation and debugging motivation added.}
+A \emph{proof certificate} records equalities that establish why two terms are equivalent.
+Clients can check the certificate independently of the optimizer.
+Proofs also explain transformations and help locate bugs, as in Herbie~\cite{herbie-proofs}.
+Smaller proofs give users fewer steps to follow and developers fewer rule applications to inspect.
+Large proofs can cost more to check than the optimization itself.
 
-\draftnote{Introduce the key technical ideas and likely contributions,
-distinguish completed work from proposed work, and outline the rest of the
-report.}
+% Sources: ../egg-papers/2022-explanations-fmcad/01-intro.tex,
+% 04-flattened-optimal.tex, and 05-flattened-greedy.tex.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S\S1, 4--5;
+  the shared parameter emphasized.}
+Our work presents two algorithms for producing smaller proofs~\cite{eggproof}:
+  \textsc{TreeOpt}, a theoretical algorithm that optimizes a relaxed proof-size objective,
+  and greedy proof search, the practical algorithm implemented in \texttt{egg}.
+Both algorithms are parameterized by the number of \emph{congruence} justifications,
+  which use equalities between subterms to justify equality between enclosing terms.
+Bounding this count and the number of subproof searches makes greedy proof search practical.
+The greedy algorithm reduces validation costs while retaining alternative explanations
+  that traditional proof generation discards.
+
+\subsection{Effect-Safe Extraction}
+\label{sec:intro-extraction}
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/abstract.tex and 01-introduction.tex.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, abstract and \S1;
+  new connection from proof production to extraction.}
+An optimizer must also turn the equalities it discovers into an executable program.
+For programs with side effects, extraction must select a valid ordering of memory
+  and input/output operations.
+We prove that finding any \emph{effect-safe extraction} is NP-complete,
+  then develop statewalk DP, an algorithm that enforces effect ordering without external solvers~\cite{eggcc}.
+Its running time depends on \emph{statewalk width},
+  which measures the dataflow interactions among effects and is usually small in our benchmarks.
+The implementation in \texttt{eggcc} makes extraction practical
+  and enables useful optimizations of imperative programs.
+
+\subsection{Composable E-Graph Extensions}
+\label{sec:intro-extensions}
+
+% Source: ../extended-egglog-paper/intro.tex; submission status from Oliver.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, \S1;
+  submission status added.}
+Real optimizers combine these capabilities with analyses and variable binding.
+When a rewrite depends on an analysis result, its proof must justify that result;
+  when terms contain bound variables, matching and proof checking must respect renaming.
+Our work currently under submission implements extensions as compiler passes
+  over \texttt{egglog}, a language for programming with e-graphs~\cite{egglog,extended-egglog}.
+One pass replaces built-in equality maintenance with explicit rules;
+  a later proof pass records the rule applications that establish equalities and analysis facts.
+This architecture combines proof production, analyses, and slotted e-graphs for bound variables.
+
+\subsection{Integration with Verified Compilers}
+\label{sec:intro-verified-compilation}
+
+% Sources: Oliver's research plan and status update; Lean egg and Coquetier papers.
+\sourcenote{New: integration challenge and proposed library from Oliver's research plan.}
+These extensions supply candidate programs and certificates.
+Integrating them into a compiler verified in Lean or Rocq requires connecting
+  each certificate to a semantic claim about the programs it relates.
+Existing integrations reconstruct \emph{proof terms}, expressions in the assistant's logic
+  that encode proofs, from \texttt{egg}'s explanations~\cite{lean-egg,coquetier}.
+They run equality saturation while the proof assistant processes a proof script.
+The challenge is to validate new programs within a deployed compiler,
+  after the compiler itself has been verified and built.
+
+\sourcenote{New: proposed library and completion status from Oliver's research plan.}
+Our proposed library exports proved theorems as \texttt{egglog} rules
+  and checks the resulting certificates with a verified executable checker at compiler runtime.
+This lets a verified compiler use \texttt{egglog}'s substantial unverified implementation,
+  without invoking the proof assistant on each input program.
+The Lean checker experiment and its soundness proof for a restricted fragment are complete.
+The remaining work connects theorem export, proofs of analysis facts,
+  effect-safe extraction, and runtime validation into a reusable library,
+  then evaluates a compiler case study.
+
+\sourcenote{New roadmap for this report.}
+Section~\ref{sec:background} introduces the foundations.
+Sections~\ref{sec:proofs}--\ref{sec:extensions} present the existing contributions;
+  Section~\ref{sec:proposed-research} develops the proposed integration and evaluation,
+  followed by the dissertation plan in Section~\ref{sec:timeline}.

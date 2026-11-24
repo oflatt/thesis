@@ -1,0 +1,348 @@
+\section{Composable E-Graph Extensions}
+\label{sec:extensions}
+
+% Sources: ../extended-egglog-paper/abstract.tex and intro.tex;
+% submission status supplied by Oliver.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, abstract
+  and introduction; new connection through the running example.}
+The preceding sections address the size of proofs and the choice of an executable program.
+Producing proofs for a realistic optimizer also requires support for analyses and variable binding.
+In the running summation example, an analysis establishes that a factor is independent
+  of the bound variable, and the proof uses that fact to justify moving the factor.
+Renaming the sum's variable also changes the analysis fact that the proof must justify.
+These interactions make independently implemented extensions difficult to combine.
+
+% Source: ../extended-egglog-paper/intro.tex, architecture and contributions.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, introduction;
+  submission status added.}
+Our work, \emph{Extended E-Graphs via Compilation}, is currently under submission~\cite{extended-egglog}.
+It implements slotted e-graphs, proof production, and disequality reasoning
+  as compiler passes over \texttt{egglog} programs.
+Disequality reasoning derives explicit facts that terms have different values.
+Each pass translates an extension into rules in a simpler language,
+  making interactions explicit at the boundary between passes.
+This section focuses on composing binding, analyses, and proofs;
+  the complete translations and correctness arguments appear in the paper.
+
+\subsection{Background: Variable Binding}
+\label{sec:background-binding}
+
+% Source: ../extended-egglog-paper/slotted.tex, opening and Semantics;
+% examples adapted to continue the report's running summation example.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation},
+  binding definitions; examples adapted.}
+Binders such as summations and lambda abstractions introduce variables with local scope.
+In $\sum_{i=0}^{10} i\,j$, the variable $i$ is bound by the summation,
+  while $j$ is free.
+Consistently renaming $i$ to $k$ yields $\sum_{k=0}^{10} k\,j$,
+  an \emph{alpha-equivalent} expression with the same meaning.
+Substitution respects these scopes so that a free variable does not become accidentally bound.
+
+% Primary source: Schneider et al., PLDI 2025, abstract and Sections 2--3.
+% https://steuwer.info/files/publications/2025/PLDI-Slotted-E-Graphs.pdf
+\sourcenote{New summary of prior work: \emph{Slotted E-Graphs}, \S\S2--3.}
+Slotted e-graphs share representations of terms that differ only
+  in the names of bound or free variables~\cite{slotted-egraphs}.
+Their e-classes use \emph{slots} as placeholders for free variables.
+A reference to an e-class carries a renaming that connects its slots
+  to variables in the surrounding term.
+For example, the terms $i\,j$ and $k\,j$ can share a representation with two free slots,
+  mapped to $i$ and $j$ in one reference and to $k$ and $j$ in the other.
+These mappings preserve the distinction between the free variables.
+
+\subsection{Extensions via Compilation}
+\label{sec:extension-architecture}
+
+% Sources: ../extended-egglog-paper/intro.tex and overview.tex, pass architecture.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation},
+  introduction and overview.}
+The compilation pipeline progressively removes features from the language
+  interpreted by the engine (Figure~\ref{fig:extension-pipeline}).
+The slotted pass replaces built-in variable renaming with rules over explicit renaming maps.
+The congruence pass replaces built-in equality maintenance with rules that record
+  and propagate equalities.
+The proof pass then adds rules that log how facts were derived.
+The resulting program runs in an equality-free core:
+  it stores and queries terms, but all reasoning about equality takes place in generated rules.
+These rules reuse \texttt{egglog}'s query optimizations and parallel execution.
+
+% Source: ../extended-egglog-paper/drawnfigures/architecture.tex, right-hand pipeline.
+\begin{figure}[htbp]
+  \sourcenote{New simplified diagram of the pipeline in
+    \emph{Extended E-Graphs via Compilation}; new caption.}
+  \centering
+  \input{figures/extension-pipeline}
+  \caption{Compilation of an extended \texttt{egglog} program.
+    Each pass expresses its feature using constructs supported by the next language.
+    The proof pass logs both user-rule applications and generated maintenance steps;
+    proof lifting translates those steps back into a certificate over the user's rules.
+    An optional disequality pass precedes the slotted pass.}
+  \label{fig:extension-pipeline}
+\end{figure}
+
+% Sources: ../extended-egglog-paper/overview.tex, schedule transformation;
+% congruence.tex, Run translation and correctness.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation},
+  overview and congruence pass.}
+Generated rules must run before user rules rely on their results.
+The congruence pass saturates the rules that maintain equality after each round of user rules,
+  so the next round sees the equalities that built-in congruence closure would derive.
+Our operational semantics specifies each scheduled step,
+  allowing pass correctness to account for executions that stop before full saturation.
+
+\subsection{Proofs for Equalities and Analysis Results}
+\label{sec:extension-proofs}
+
+% Source: ../extended-egglog-paper/proofs.tex, opening and Proofs;
+% contrast with Section 3 added for the report.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, proof pass;
+  new connection to Section~\ref{sec:proofs}.}
+Section~\ref{sec:proofs} takes the equalities supplied to congruence closure as given.
+For \texttt{egglog}, a certificate must also explain why a rule could supply each equality.
+In the running example, moving $5$ inside the outer sum requires
+  $\mathtt{NotFree}(\texttt{"i"},5)$.
+The proof must derive this fact from the analysis rule,
+  then use it as a premise of distribution.
+
+% Sources: ../extended-egglog-paper/background.tex, initialization, analysis,
+% and distribution rules; proofs.tex, existence claims and Rule proof steps.
+\begin{samepage}
+\sourcenote{New proof presentation of the running example from
+  \emph{Extended E-Graphs via Compilation}; the inference steps follow its rules.}
+Let $B=\sum_{j=0}^{10}i\,j$ and $S=\sum_{i=0}^{10}B$.
+Write $E(t)$ for evidence that the term $t$ has been built; analysis facts are terms too.
+The first distribution step has the following proof:
+\[
+  \dfrac{
+    \dfrac{}{E(5\cdot S)}\;\text{insert}
+    \qquad
+    \dfrac{
+      \dfrac{}{E(S)}\;\text{insert}
+      \qquad
+      \dfrac{}{E(5)}\;\text{insert}
+    }{E(\mathtt{NotFree}(\texttt{"i"},5))}\;\text{analysis}
+  }{5\cdot S=\displaystyle\sum_{i=0}^{10}5\cdot B}\;\text{distribution}.
+\]
+\end{samepage}
+All three leaves use the same initialization rule, which inserts the input and its subterms.
+The analysis branch uses the rule that numbers have no free variables.
+The proof of distribution into the inner sum has the same structure.
+
+% Source: ../extended-egglog-paper/proofs.tex, opening and Proofs.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, proof pass.}
+The certificate format represents an existence claim $E(t)$ as $t=t$.
+Although this equality is mathematically reflexive,
+  it also asserts that the term $t$ has been derived in the \texttt{egglog} program.
+An unconditional reflexivity step would allow a certificate to assert
+  $\mathtt{NotFree}(\texttt{"i"},5)$ without evidence.
+Our format therefore has no reflexivity step:
+  existence claims must be justified by rule applications,
+  just as other equalities must be justified by rules or equality reasoning.
+
+% Source: ../extended-egglog-paper/proofs.tex, opening pipeline and provenance.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, proof pass;
+  explanation of the pass order retained.}
+To produce these certificates, the proof pass needs derivations for both equalities and analysis facts.
+The congruence pass turns built-in equality maintenance into rule applications.
+After this translation, every derived fact has the same kind of explanation:
+  a rule firing and the facts that its query matched.
+The proof pass logs these firings and reconstructs a proof by recursively explaining their premises.
+
+% Sources: ../extended-egglog-paper/congruence.tex, Congruence Translation;
+% proofs.tex, Lifting Proofs.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation},
+  congruence pass and proof pass; path-compression rule unchanged apart from notation and layout.}
+For example, the congruence pass represents links in the union-find structure,
+  which tracks e-class membership,
+  as terms $\mathtt{UF}(a,b)$ recording that $a$ and $b$ are equal.
+One generated rule shortens a chain of links, an operation called \emph{path compression}:
+\begin{eggprogram}
+  &\mathtt{UF}(a,b)\land\mathtt{UF}(b,c)\land b\ne c&&\\*
+  &\quad\Rightarrow\kw{subsume}(\mathtt{UF}(a,b)),\ \mathtt{UF}(a,c).&&
+\end{eggprogram}
+Here $\kw{subsume}$ removes the old link from future queries;
+  the new link connects $a$ directly to $c$.
+
+% Sources: ../extended-egglog-paper/proofs.tex, provenance and lifting;
+% congruence.tex, path-compression rule above (unchanged apart from notation/layout).
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, proof pass.}
+The reconstructed proof describes the compiled program, including its generated rules.
+To return a certificate for the user's original program,
+  \emph{lifting} translates generated steps back into reasoning over the original rules.
+For example, the path-compression step becomes transitivity of equality.
+
+\subsection{Slotted E-Graphs via Compilation}
+\label{sec:slotted-compilation}
+
+% Source: ../extended-egglog-paper/slotted.tex, opening and Semantics.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, slotted pass.}
+The slotted pass expresses variable renaming as rules,
+  so the later proof pass can record its derivations.
+Binding annotations specify which arguments introduce variables and where they are bound.
+For summations, $\operatorname{bind}(\SumZeroTen)=\{(1,2)\}$ declares that the first argument
+  names a variable bound within the second.
+We write object-language variables as slots $\$i$ and $\$j$,
+  distinguishing them from pattern variables such as $x$.
+A renaming maps distinct slots to distinct slots and avoids capturing free variables.
+Renaming both sides of an established equality yields another valid equality;
+  changing only bound names identifies alpha-equivalent terms.
+The generated rules operate over terms and explicit renaming maps.
+
+% Source: ../extended-egglog-paper/slotted.tex, Slotted Maintenance Implementation.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation},
+  slotted maintenance; argument pairs grouped for readability.}
+The stored representation shares terms across renamings by pairing each child
+  with a map from its slot names to the names used by the parent.
+We write each child as a pair $(\text{renaming},\text{term})$.
+All variable leaves can then use one stored term, $\$0$:
+\[
+  \mathtt{Mul}(\$i,\$j)
+  \quad\leadsto\quad
+  \mathtt{Mul}\bigl(([\$0\mapsto\$i],\$0),\,
+                     ([\$0\mapsto\$j],\$0)\bigr).
+\]
+The maps keep $\$i$ and $\$j$ distinct despite sharing the leaf.
+Generated rules discover terms that are equal up to renaming
+  and choose a common stored representation for them.
+Other generated rules maintain the free slots of each e-class,
+  including when an equality makes a variable unnecessary.
+
+% Source: ../extended-egglog-paper/slotted.tex, E-Matching Implementation.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation},
+  slotted matching and proof lifting.}
+Matching a source query against this representation must recover the relevant renamings.
+The compiled query finds stored terms and explores compatible assignments of slot names.
+Distinct slots within a term must remain distinct,
+  while occurrences that the query equates must receive consistent names.
+These constraints also apply across \emph{multipatterns},
+  queries that match several patterns with shared variables.
+Analyses use the same representation, so their facts participate in renaming
+  and free-variable checks.
+The later proof pass records the generated derivations;
+  slotted proof lifting replaces maintenance steps with equality and renaming steps
+  checked against the original rules and binding annotations.
+Thus the combination supports binding, analyses, multipatterns, and proofs together.
+
+\subsection{Correctness Guarantees}
+\label{sec:extension-correctness}
+
+% Sources: ../extended-egglog-paper/congruence.tex, Correctness;
+% proofs.tex, Adapting Datalog Provenance; appendix.tex, Proof Checker.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation},
+  congruence correctness, provenance correctness, and checker appendix.}
+We formalize the core semantics, congruence pass, and proof-recording transformation in Lean.
+For the formalized source fragment, these passes preserve
+  whether a program succeeds, fails a check, or does not terminate.
+We also prove that successfully lifted certificates are accepted by the source checker.
+The checker's soundness theorem establishes that an accepted equality holds
+  in an e-graph containing its endpoints and closed under the program's rules:
+  rerunning any rule adds no new information.
+This closure condition is needed because a certificate establishes a consequence
+  of the rules independently of the user's schedule.
+
+% Sources: ../extended-egglog-paper/proofs.tex, formalization scope;
+% slotted.tex, final paragraph; appendix.tex, source-checker fragment.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation},
+  proof pass and slotted pass; scope condensed.}
+These theorems cover a restricted language, not the entire implementation.
+The source checker excludes term removal and tests for whether terms currently occupy different e-classes.
+It also excludes $\min$, which generated rules use to choose a common representative for equal terms.
+They do not guarantee that proof reconstruction or lifting always succeeds.
+Slotted compilation and its source checker remain outside the Lean formalization.
+
+\subsection{Evaluation and Applications}
+\label{sec:extension-evaluation}
+
+% Source: ../extended-egglog-paper/eval.tex, research questions and application studies.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, evaluation questions.}
+The evaluation tests whether compiled extensions preserve existing capabilities,
+  how much proof production costs in existing optimizers,
+  and whether combining extensions enables useful optimizations.
+
+% Sources: ../extended-egglog-paper/eval.tex, RQ1--RQ2;
+% eval-presentation.numbers.tex and figures/eval/headline-speedups.numbers.tex.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, evaluation.}
+The generated rules reproduce the checked results of prior implementations.
+The Math workload from the original \texttt{egglog} evaluation~\cite{egglog}
+  also lets us compare the cost of producing and checking proofs:
+  execution with proof extraction and checking takes 29.07 seconds,
+  compared with 38.58 seconds for \texttt{egg} with proofs.
+Proof simplification is disabled in both; our time includes compilation by the passes.
+
+% Sources: ../extended-egglog-paper/eval.tex, Adding Proofs to Existing egglog Programs;
+% eval-presentation.numbers.tex and figures/eval/corpus-proof-stages-cdf.numbers.tex.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation},
+  application evaluation and proof-cost appendix; percentile measurements rounded.}
+To test proof production in existing optimizers, we ran
+  486 \texttt{egglog} programs from six projects, including \texttt{eggcc}.
+Across these programs,
+  we produced and checked a proof for every requested extraction or equivalence check.
+Relative to original \texttt{egglog} execution, execution with proof recording takes
+  less than $3.66\times$ as long for half the programs and less than $4.71\times$ for 95\%.
+These ratios exclude proof reconstruction and checking.
+Including reconstruction, simplification, and checking raises the median to $4.64\times$
+  and the 95th percentile to $71.47\times$.
+Inexpensive recording therefore does not by itself make validation inexpensive.
+
+% Sources: ../extended-egglog-paper/eval.tex, LMFAO Query Optimization;
+% appendix.tex, LMFAO Workload and Measurements.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation},
+  LMFAO evaluation and measurement appendix.}
+We test composition by implementing the LMFAO query optimizer~\cite{lmfao}
+  with the combined passes.
+Its rewrites move independent factors out of sums, interchange loops, and fuse reductions,
+  requiring binding, analyses, and multipatterns together.
+On 140 covariance queries over the released sample data, the slotted implementation produces
+  checked proofs and queries with performance comparable to those chosen by the original optimizer,
+  at higher planning and compilation cost.
+An alternative encoding using numerical indices for bound variables
+  reaches a 20\,GiB memory limit without producing a plan.
+This case demonstrates both the benefit of composition and the cost of broader search.
+
+% New synthesis from Sections 3 and 5 and Oliver's proposed compiler design.
+\sourcenote{New: connection to proof minimization and the proposed compiler.}
+Proof production for analysis facts supplies a component for the proposed compiler.
+The measured checking costs motivate evaluating proof minimization
+  on certificates containing analysis and renaming steps.
+A further obligation is semantic: deriving a fact from \texttt{egglog} rules
+  does not establish that those rules correctly describe program behavior.
+Section~\ref{sec:proposed-research} proposes the remaining connection
+  between accepted derivations and language semantics.
+
+\subsection{Related Work}
+\label{sec:related-extensions}
+
+% Source: ../extended-egglog-paper/related_work.tex, Implementing Extensions by Compilation.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, related work.}
+The nanopass approach offers an architectural precedent for combining language features:
+  each pass removes a small language feature and produces a simpler intermediate language~\cite{nanopass}.
+Ballantyne and colleagues similarly expand language extensions into a core language
+  optimized by a nanopass back end~\cite{nanopass2}.
+Applying this organization to e-graphs requires accounting for features
+  that affect a shared equality relation:
+  a change to variable binding or congruence can change what a rule matches
+  and what evidence its application requires.
+
+% Source: ../extended-egglog-paper/related_work.tex, Implementing Extensions by Compilation.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, related work.}
+Relational e-matching recasts matching rewrite patterns as database joins,
+  which combine matching records that agree on shared variables~\cite{relational-ematching}.
+The \texttt{egglog} query engine builds on this approach~\cite{egglog}.
+By expressing extension logic as rules, our passes reuse this query engine
+  and its optimizations.
+
+% Source: ../extended-egglog-paper/related_work.tex, Egraph Semantics.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, related work.}
+Suciu and colleagues characterize the result of running rewrite rules
+  until no new terms or equalities can be added~\cite{semantic-foundations}.
+This characterizes saturation independently of a particular implementation.
+Our operational semantics describes scheduled executions,
+  including runs that stop before saturation.
+
+% Source: ../extended-egglog-paper/related_work.tex, Proof Production and Provenance.
+\sourcenote{Edited from \emph{Extended E-Graphs via Compilation}, related work.}
+Database \emph{provenance} records which input data and derivation steps contribute to a result.
+Datalog and SQL systems obtain provenance through program or query transformations
+  that log dependencies~\cite{datalog-debugging,exspan,provsql}.
+Our proof pass applies this approach after congruence compilation
+  and lifts the resulting derivations into proofs over the source rules.

@@ -1,0 +1,40 @@
+% New diagram of Oliver's proposed verified-compilation library.
+% Labels distinguish developer input, automatic work, and generated artifacts.
+\begin{tikzpicture}[
+    font=\footnotesize,
+    stage/.style={draw, rounded corners=2pt, align=center, inner sep=4pt},
+    build/.style={stage, text width=4cm, minimum height=2.45cm},
+    run/.style={stage, text width=3.1cm, minimum height=2.05cm},
+    flow/.style={-{Latex[length=2.2mm]}, thick}]
+  \node[anchor=west, font=\small\bfseries] at (-1.65,1.65)
+    {Once per compiler: in Lean or Rocq};
+  \node[build, fill=orange!12] (theorems) at (0.45,0)
+    {\textbf{Developer provides}\\[3pt]
+     IR and semantics\\Congruence and laws\\
+     Rewrite/analysis proofs\\IR validity check + proof};
+  \node[build, fill=blue!8] (library) at (5.9,0)
+    {\textbf{Library (automatic)}\\[3pt]
+     Export rules\\Instantiate validator\\Derive pass theorem};
+  \node[build, fill=black!4] (artifacts) at (11.35,0)
+    {\textbf{Generated artifacts}\\[3pt]
+     \texttt{egglog} rules\\Executable validator\\Correctness theorem};
+  \draw[flow] (theorems) -- (library);
+  \draw[flow] (library) -- (artifacts);
+  \draw[black!30] (-1.65,-1.55) -- (13.45,-1.55);
+  \node[anchor=west, font=\small\bfseries] at (-1.65,-1.95)
+    {Each input program: automatic compilation without Lean/Rocq};
+  \node[run, fill=orange!12] (input) at (0,-3.4)
+    {\textbf{User provides}\\Input program};
+  \node[run, fill=blue!8] (search) at (3.95,-3.4)
+    {\textbf{Unverified}\\\texttt{egglog}\\Search + extraction\\Produce certificates};
+  \node[run, fill=blue!8] (check) at (7.9,-3.4)
+    {\textbf{Verified validator}\\Check certificate\\Check IR validity};
+  \node[run, fill=black!4] (output) at (11.85,-3.4)
+    {\textbf{Output}\\Accepted program};
+  \draw[flow] (input) -- (search);
+  \draw[flow] (search) -- (check);
+  \draw[flow] (check) -- node[above, font=\footnotesize] {yes} (output);
+  \draw[flow] (input.south) -- (0,-4.85)
+    -- node[below, font=\footnotesize] {original input} (7.9,-4.85)
+    -- (check.south);
+\end{tikzpicture}

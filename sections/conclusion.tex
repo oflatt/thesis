@@ -1,9 +1,25 @@
 \section{Conclusion}
 \label{sec:conclusion}
 
-\draftnote{Restate the thesis claim and explain how the completed and proposed
-contributions fit together. Summarize the anticipated significance of the
-dissertation.}
+% Sources: report thesis and project sections; new concluding synthesis.
+\sourcenote{New synthesis of the report's semantic and algorithmic contributions.}
+This thesis develops e-graph extensions for reasoning about and transforming programs:
+  proof production, effect-safe extraction, and composable support for analyses and binding.
+Proofs enable checking, explanation, and debugging;
+  effect-safe extraction makes the selected program executable with a valid effect ordering.
+The proposed verified compiler brings these capabilities together
+  and will test their combined benefit for compilation.
+
+% Sources: Small Proofs, Sections 4--5; eggcc, Sections 1 and 3.
+\sourcenote{New synthesis of the parameterized-algorithm contribution.}
+Parameterized algorithms provide a recurring method for making these extensions efficient.
+For proof minimization, both \textsc{TreeOpt} and greedy proof search are parameterized
+  by the number of congruence edges.
+Bounding this count and the number of recursive searches makes the greedy algorithm practical.
+For effect-safe extraction, statewalk width captures the interactions
+  that the algorithm must handle and remains small on the evaluated workloads.
+Identifying these structural parameters connects complexity analysis to algorithm design
+  and gives the proposed compiler evaluation concrete explanations to test.
 
 \draftnote{Make the scope explicit: identify future directions that will
 remain outside this dissertation.}

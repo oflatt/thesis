@@ -1,0 +1,198 @@
+\section{Proof Production and Minimization}
+\label{sec:proofs}
+
+% Source: ../egg-papers/2022-explanations-fmcad/01-intro.tex;
+% Herbie proof documentation supplies the explanation application.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S1;
+  explanation and debugging motivation added.}
+Small proofs reduce both validation costs and the number of steps a person must inspect
+  to understand or debug an optimizer's result~\cite{herbie-proofs}.
+Our work, published at FMCAD 2022, retains alternative explanations during congruence closure
+  and presents two algorithms for choosing among them~\cite{eggproof}.
+\textsc{TreeOpt} is the theoretical contribution, optimizing a relaxed proof-size objective;
+  greedy proof search is the practical algorithm implemented in \texttt{egg}.
+
+\subsection{Background: Congruence Proof Generation}
+\label{sec:background-proof-production}
+
+% Source directory: ../egg-papers/2022-explanations-fmcad/.
+% Sources: 02-background.tex and 03-explanation-length.tex.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S\S2--3.}
+A \emph{proof graph} records justifications for equalities:
+  its vertices are terms and its edges connect equal terms.
+An edge can record an \emph{input equality}, a concrete equality supplied to congruence closure,
+  for example by a rewrite.
+Alternatively, a \emph{congruence edge} justifies $f(a)=f(b)$ by referring to a proof of $a=b$.
+A proof follows a path between its endpoints, combines the edges by transitivity of equality,
+  and recursively proves the child equalities required by congruence edges.
+A rewrite rule may supply many different input equalities,
+  and a proof may use the same input equality more than once.
+
+% Sources: same files, spanning-tree construction and discarded equalities.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S\S2--3.}
+Traditional proof generation maintains a tree connecting the terms in each e-class~\cite{pp-congr}.
+Its unique paths give valid proofs, but additional equalities between already connected terms
+  are discarded even when they offer shorter explanations.
+Our approach retains those equalities as alternative edges
+  without changing the asymptotic cost of congruence closure.
+
+\subsection{Generating Small Proofs}
+\label{sec:small-proofs}
+
+% Sources: Small Proofs, 03-explanation-length.tex and 04-flattened-optimal.tex.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S\S3--4.}
+Our \emph{DAG size} metric counts distinct input equalities,
+  counting an equality once even if several subproofs use it.
+The name refers to representing a proof as a directed acyclic graph (DAG) with shared subproofs.
+Finding a proof of minimum DAG size is NP-hard~\cite{small-conflict}.
+Sharing makes local choices difficult: the cost of a subproof depends on
+  which equalities other parts of the proof already use.
+Our relaxed \emph{proof tree size} metric counts every use of an input equality
+  after expanding all congruence justifications.
+
+% Source: Small Proofs, 02-background.tex and 04-flattened-optimal.tex;
+% inference-tree layout and explanation are new for the report.
+\begin{samepage}
+\sourcenote{New inference-tree presentation of the example from
+  \emph{Small Proofs from Congruence Closure}, \S\S2, 4.}
+For example, $a+0=a$ and $2+2=4$ give this proof:
+\[
+  \dfrac{
+    a+0=a
+    \qquad
+    \dfrac{a+0=a\qquad 2+2=4}{g(a+0,2+2)=g(a,4)}\;\text{congruence}
+  }{f(a+0,g(a+0,2+2))=f(a,g(a,4))}\;\text{congruence}.
+\]
+\end{samepage}
+Each horizontal line applies congruence to the equalities above it to derive the equality below it.
+The proof uses $a+0=a$ twice and $2+2=4$ once, so its tree size is three and its DAG size is two.
+Tree size therefore bounds DAG size from above.
+Because it counts repeated uses separately, the cost of each subproof
+  is independent of the equalities used elsewhere.
+This lets us find a proof of minimum tree size in polynomial time.
+
+\subsubsection{TreeOpt: Optimal Proof Tree Size}
+\label{sec:treeopt}
+
+% Source: ../egg-papers/2022-explanations-fmcad/04-flattened-optimal.tex,
+% Minimum Proof Tree Size Algorithm; notation replaced with explanation.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S4.}
+If every edge had a known cost, finding a small proof would be a shortest-path problem:
+  choose a path whose edge costs have the smallest sum.
+An input-equality edge costs one, but a congruence edge costs the tree size
+  of the subproofs that justify it.
+Those subproofs may themselves use congruence,
+  so their costs are initially unknown.
+
+% Source: same file, bottom-up passes and complexity.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S4.}
+Our \textsc{TreeOpt} algorithm computes these costs from the input equalities upward.
+An edge recording an input equality has cost one;
+  an edge justified by congruence initially has infinite cost.
+Each pass uses shortest paths between children to improve the costs
+  of the corresponding congruence edges.
+Repeated passes account for increasingly nested uses of congruence.
+When no cost improves, a shortest path between the requested terms,
+  together with its subproofs, gives a proof of minimum tree size.
+
+% Source: same file, final paragraph; c = |C| and m = |E|.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S4;
+  dependence on the congruence count emphasized.}
+Let $c$ be the number of congruence edges and $m$ the total number of edges
+  in the proof graph, including congruence edges.
+\textsc{TreeOpt} needs at most $c$ passes,
+  each updating the costs of at most $c$ congruence edges.
+Its running time is $O(c^2m)$~\cite{eggproof}.
+This parameterized bound exposes the cost of congruence reasoning:
+  more congruence justifications require both more subproof searches per pass
+  and potentially more passes.
+\textsc{TreeOpt} establishes a polynomial-time solution for the relaxed tree-size objective,
+  but these repeated searches make it too expensive for practical proof generation.
+Its role is to provide a theoretical result, a baseline for evaluation,
+  and a starting point for the greedy algorithm.
+
+\subsubsection{Greedy Proof Search}
+\label{sec:greedy-proofs}
+
+% Source: ../egg-papers/2022-explanations-fmcad/05-flattened-greedy.tex,
+% Greedy Optimization and Estimating Tree Sizes.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S5.}
+Practical greedy proof search replaces optimal subproof costs with estimates
+  from the trees maintained by traditional proof generation.
+These trees already provide valid proofs, whose tree sizes bound the optimal costs.
+Using the estimates as edge weights, the algorithm first finds a short path
+  between the requested terms, then recursively improves the subproofs
+  required by its congruence edges.
+It limits this recursive optimization to a fixed number of subproof searches
+  and uses the original tree proofs for the remaining subproofs.
+
+% Source: same file, final complexity analysis and implementation limits.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S5.}
+The implementation controls the expensive searches identified by \textsc{TreeOpt}'s analysis.
+Let $n$ count the terms and input equalities in the instance.
+For a fixed budget of recursive searches, computing the estimates and generating a proof
+  takes $O(n\log n+c)$ time.
+Thus greedy proof search is also parameterized by $c$, the number of congruence edges.
+Our implementation permits ten recursive subproof searches
+  and retains at most $10n$ congruence edges.
+This bounds $c$ by a linear function of $n$ and gives an $O(n\log n)$ running time,
+  matching the asymptotic bound for congruence closure.
+The greedy algorithm guarantees a valid proof, but does not guarantee
+  minimum tree size or minimum DAG size.
+
+\sourcenote{New scope note for this report.}
+For space, we summarize the algorithms' main ideas;
+  their complete descriptions and analyses appear in the paper~\cite{eggproof}.
+
+\subsection{Evaluation and Applications}
+\label{sec:proofs-evaluation}
+
+% Source: Small Proofs, 06-eval.tex, Z3 comparison and Detailed Analysis.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S6.}
+We evaluated \texttt{egg}'s proof generation on 3,760 input/output pairs
+  recorded from Herbie's equality saturation runs~\cite{eggproof}.
+We asked Z3 to prove the same equalities from the same rewrite rules.
+Z3 timed out after two minutes on 5\% of the queries;
+  the proof-size comparison uses the remaining 3,571 pairs.
+Greedy proofs were 72.8\% as large as Z3's on average, measured by DAG size.
+They were also smaller than proofs obtained by removing unnecessary equalities
+  from an existing \texttt{egg} certificate, a technique called \emph{proof reduction}.
+This comparison shows that the improvement does not depend solely
+  on differences between the \texttt{egg} and Z3 implementations.
+
+% Source: ../egg-papers/2022-explanations-fmcad/06-eval.tex, Detailed Analysis and Table I.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S6.}
+We use \textsc{TreeOpt} as an exact baseline for the relaxed tree-size objective.
+Greedy proof search matched this optimum in 81.1\% of cases.
+On the 3,571-query comparison, \texttt{egg} with greedy proof generation
+  took 39.33\,ms per query on average, compared with 1,008.60\,ms with \textsc{TreeOpt}.
+The greedy algorithm thus retains much of the benefit at a lower cost.
+These results do not establish how close its proofs are to minimum DAG size:
+  computing that optimum was too expensive to provide a baseline.
+
+% Source: same evaluation, hardware case study and Table II.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S6, hardware case study.}
+To measure the benefit for validation, we applied the algorithm to six Intel circuit benchmarks.
+The validation flow checks each proof step with the industrial HECTOR equivalence checker;
+  smaller proofs reduce the number of intermediate circuits it must compare.
+DAG size fell by 29\% on average.
+For a constant-multiplication design, the complete verification flow fell from 4.7 to 2.3 hours.
+This demonstrates that smaller certificates can make an optimizer's results substantially cheaper to use.
+
+% New connection between existing proof minimization and the proposed library.
+\sourcenote{New connection to the proposed compiler.}
+The proposed library in Section~\ref{sec:verified-compilation} extends this use of certificates
+  to proofs containing analysis and renaming steps.
+Its evaluation must determine whether minimizing those richer proofs
+  similarly reduces runtime validation costs.
+
+\subsection{Related Work}
+\label{sec:proofs-related-work}
+
+% Source: Small Proofs, 02-background.tex, Shrinking Congruence Proofs.
+\sourcenote{Edited from \emph{Small Proofs from Congruence Closure}, \S2.}
+Proof reduction removes equalities from an existing certificate
+  and checks whether the remainder still proves the result~\cite{pp-congr}.
+Trying each removal from a proof with $k$ input equalities takes $O(k^2\log k)$ time.
+It cannot recover a shorter explanation using equalities already discarded.
+Our algorithms consider alternatives during proof generation, before committing to a certificate.

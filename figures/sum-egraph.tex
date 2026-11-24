@@ -1,0 +1,49 @@
+% New diagram of the nested-sum example in
+% ../extended-egglog-paper/background.tex, with equality edges following
+% ../egg-papers/2022-explanations-fmcad/03-explanation-length.tex.
+% Each node is labeled by its term's head, with arrows to concrete child terms.
+% Solid arrows point to child terms; dashed edges assert equality.
+% Sigma_i and Sigma_j abbreviate summation with a fixed binder argument.
+% The fully distributed outer sum is implicit and can be assembled by extraction.
+\begin{tikzpicture}[
+  x=1.5cm,y=1cm,
+  term/.style={draw=black!65,rounded corners=2pt,fill=black!3,
+    minimum width=8mm,minimum height=8mm,inner sep=5pt},
+  child/.style={-{Stealth[length=2mm]},semithick},
+  equality/.style={dash pattern=on 6pt off 3pt,line width=1.2pt},
+  reason/.style={font=\footnotesize,fill=white,inner sep=2pt},
+  every node/.style={font=\small}
+]
+  \node[term] (input) at (-3,0) {$\times$};
+  \node[term] (middle) at (0,0) {$\Sigma_i$};
+  \node[above=2mm] at (input.north) {input};
+
+  \node[term] (outer) at (-2.8,-1.4) {$\Sigma_i$};
+  \node[term] (scaledinner) at (0,-1.4) {$\times$};
+  \node[term] (innerscaled) at (3,-1.4) {$\Sigma_j$};
+  \node[term] (five) at (-4.5,-2.8) {$5$};
+  \node[term] (inner) at (-1.4,-2.8) {$\Sigma_j$};
+  \node[term] (scaledproduct) at (2.3,-2.8) {$\times$};
+  \node[term] (product) at (0.55,-4.1) {$\times$};
+  \node[term] (ivar) at (-0.1,-5.25) {$i$};
+  \node[term] (jvar) at (1.2,-5.25) {$j$};
+
+  \draw[equality] (input.east) -- node[reason,above=2pt] {distribution} (middle.west);
+  \draw[equality] (scaledinner.east) -- node[reason,above=2pt] {distribution} (innerscaled.west);
+
+  \draw[child] (input.west) to[out=180,in=90] (five.north);
+  \draw[child] (input.south) -- (outer.north);
+  \draw[child] (middle.south) -- (scaledinner.north);
+  \draw[child] (outer.south) -- (inner.north west);
+  \draw[child] (scaledinner.south west) -- (five.north east);
+  \draw[child,preaction={draw=white,line width=3pt}]
+    (scaledinner.south) -- (inner.north east);
+  \draw[child] (innerscaled.south) -- (scaledproduct.north);
+  \draw[child] (scaledproduct.west)
+    .. controls (1.8,-3.7) and (-4.2,-3.8) .. (five.south);
+  \draw[child,preaction={draw=white,line width=3pt}]
+    (inner.south) -- (product.north west);
+  \draw[child] (scaledproduct.south) -- (product.north east);
+  \draw[child] (product.south west) -- (ivar.north);
+  \draw[child] (product.south east) -- (jvar.north);
+\end{tikzpicture}

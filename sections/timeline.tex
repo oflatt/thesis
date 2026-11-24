@@ -1,0 +1,60 @@
+\section{Dissertation Plan and Timeline}
+\label{sec:timeline}
+
+% Source: Oliver's schedule, November 20, 2026: cleanup and the egglog journal
+% paper until March; begin remaining work in March; graduate around May 2028.
+% Chapter organization follows the report's completed and proposed projects.
+\sourcenote{New: dates from Oliver's plan; proposed chapter organization.}
+The dissertation will develop the work in Sections~\ref{sec:proofs}--\ref{sec:extensions}
+  into chapters on proof minimization, effect-safe extraction, and composable extensions.
+A fourth research chapter will present the verified-compilation library and its case study.
+Work on that project begins in March 2027, following cleanup of existing work
+  and work on the \texttt{egglog} journal paper.
+The target for dissertation completion and graduation is May 2028.
+
+% Sources: dates above and milestones in sections/proposed-work.tex.
+% Intermediate dates and deliverables are proposed allocations, not completed work.
+\sourcenote{New proposed milestones based on Oliver's dates and PLDI 2028 target.}
+  \begin{longtable}{@{}p{0.24\linewidth}p{0.71\linewidth}@{}}
+    \toprule
+    Period & Planned milestone \\
+    \midrule
+    \endfirsthead
+    \toprule
+    Period & Planned milestone (continued) \\
+    \midrule
+    \endhead
+    Through Feb.\ 2027 &
+    Cleanup of existing work and the \texttt{egglog} journal paper. \\[6pt]
+    Mar.--Apr.\ 2027 &
+    Connect theorem export, \texttt{egglog} proof production, and the Lean checker
+      on a small language, including a rewrite with an analysis premise. \\[6pt]
+    May--June 2027 &
+    Establish the round-trip correctness theorem and package the interface as a library.
+    Select the main case study after testing its semantics and integration requirements. \\[6pt]
+    July--Aug.\ 2027 &
+    Integrate a useful optimization pass in the selected compiler.
+    Connect its representations and semantics to runtime validation. \\[6pt]
+    Sept.--Oct.\ 2027 &
+    Evaluate optimization benefit, validation cost, and developer effort.
+    Complete a paper draft and prepare the proofs and evaluation materials. \\[6pt]
+    Nov.\ 2027 &
+    Target submission to PLDI 2028, subject to its announced deadline. \\[6pt]
+    Dec.\ 2027--Feb.\ 2028 &
+    Revise the paper and artifact as needed and draft the dissertation chapters.
+    Reserve time for additional experiments and remaining proof or integration work. \\*[6pt]
+    Mar.--Apr.\ 2028 &
+    Complete a full dissertation draft in March;
+      incorporate committee feedback and prepare the defense in April. \\*[6pt]
+    May 2028 &
+    Target the defense, final revisions, and dissertation completion. \\
+    \bottomrule
+  \end{longtable}
+
+% Source: Oliver's selection of PLDI 2028 as the primary target.
+% PLDI 2027's published deadline was November 12, 2026; checked November 20, 2026.
+% No PLDI 2028 deadline was located; November 2027 is a planning projection.
+\sourcenote{New: Oliver's PLDI 2028 target; submission window projected from the 2027 call.}
+The November submission date is a planning estimate, pending the PLDI 2028 call.\footnote{The published
+  \href{https://pldi27.sigplan.org/track/pldi-2027-papers}{PLDI 2027} submission deadline
+  was November 12, 2026; checked November 20, 2026.}

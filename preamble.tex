@@ -13,7 +13,10 @@
 \usepackage{microtype}
 \usepackage{graphicx}
 \graphicspath{{figures/}}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,fit,backgrounds}
 \usepackage{booktabs}
+\usepackage{longtable}
 \usepackage{xcolor}
 \usepackage{hyperref}
 \hypersetup{hidelinks}
@@ -23,15 +26,41 @@
 \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
 
-% Draft prompts are visible in the initial PDF. Replace them with report text.
-% Use \draftnotesfalse to hide prompts when reviewing a developed draft.
+% Draft prompts and source notes stay visible in the working PDF.
+% review.tex selects a separate reading copy without these annotations.
 \newif\ifdraftnotes
-\draftnotestrue
+\ifdefined\reportreview
+  \draftnotesfalse
+\else
+  \draftnotestrue
+\fi
 \newcommand{\draftnote}[1]{%
   \ifdraftnotes
     \par\noindent{\color{black!60}\small\textit{[Draft: #1]}}\par
   \fi
 }
 
+% Identify reused passages while drafting; hide with \draftnotesfalse.
+\newcommand{\sourcenote}[1]{%
+  \ifdraftnotes
+    \par\addvspace{0.4\baselineskip}%
+    \noindent{\color{blue!65!black}\footnotesize\textit{Source: #1}}\par\nobreak
+  \fi
+}
+
 \renewcommand{\sectionautorefname}{Section}
 \renewcommand{\subsectionautorefname}{Section}
+
+% Mathematical egglog notation from Extended E-Graphs via Compilation.
+\newcommand{\SumZeroTen}{\ensuremath{\mathtt{Sum}_{0}^{10}}}
+\newcommand{\kw}[1]{\mathsf{#1}}
+\newcommand{\codecomment}[1]{\text{\footnotesize\color{black!65}\texttt{//} #1}}
+\NewDocumentEnvironment{eggprogram}{+b}{%
+  \begingroup
+  \interdisplaylinepenalty=10000
+  \setlength{\jot}{2pt}
+  \begin{flalign*}
+    #1
+  \end{flalign*}
+  \endgroup
+}{}

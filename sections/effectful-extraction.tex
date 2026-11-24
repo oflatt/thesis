@@ -1,0 +1,266 @@
+\section{Effect-Safe Extraction}
+\label{sec:effectful-extraction}
+
+% Sources: ../egg-papers/2026-OOPSLA-eggcc/abstract.tex and 01-introduction.tex.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs},
+  abstract and \S1; new connection to the thesis.}
+Effect-safe extraction selects computations together with a valid order for their effects.
+Prior approaches use integer linear programming (ILP),
+  encoding program choices and effect-ordering requirements as constraints for a solver.
+Solving this extraction problem can dominate optimization time.
+Our work, published at OOPSLA 2026, introduces \emph{statewalk DP},
+  a dynamic programming algorithm whose running time depends on a structural parameter,
+  \emph{statewalk width}~\cite{eggcc}.
+Its implementation in \texttt{eggcc} makes effectful extraction practical
+  and enables useful domain-specific optimizations.
+
+\subsection{Background: Effects and Control Flow}
+\label{sec:background-effects}
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/02-background.tex,
+% Dataflow-based IRs and RVSDGs; project-specific discussion omitted.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S2.}
+Compilers manipulate programs using \emph{intermediate representations} (IRs).
+In a dataflow IR, nodes represent computed values and edges encode their dependencies.
+Operations with side effects also have ordering dependencies:
+  reordering memory writes or output can change behavior.
+A \emph{state value} encodes this order, passing from one effectful operation to the next.
+Each effectful operation consumes a state value and produces a new one,
+  making its execution depend on the preceding operation.
+An \emph{effect-safe} graph uses state values without duplicating or dropping them,
+  so its effectful operations form a single sequence called a \emph{statewalk}~\cite{eggcc}.
+
+% Sources: same background; 04-formal-rvsdgs.tex, purity and stateful values.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S\S2, 4.}
+A term is \emph{effectful} if it produces a state, possibly alongside other values.
+Values other than state values are called \emph{pure values},
+  and a term producing only these values is called \emph{pure}.
+Purity is a property of the value a term denotes, not of how that value is computed:
+  a pure term can depend on a memory operation that produces its value.
+Regionalized Value State Dependence Graphs (RVSDGs) combine these data and state dependencies
+  with nested regions for control-flow constructs such as loops and conditionals~\cite{rvsdg}.
+Each region has its own inputs, outputs, and statewalk.
+
+\subsection{The Effect-Safe Extraction Problem}
+\label{sec:effect-safe-problem}
+
+% Sources: ../egg-papers/2026-OOPSLA-eggcc/03-overview.tex;
+% 04-formal-rvsdgs.tex, semantics and authoring rules.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S\S3--4.}
+An e-graph can contain equal terms that differ in whether their effects form a valid sequence.
+Our semantics treats states as explicit values, allowing terms to duplicate or discard them;
+  only the effect-safe terms can be used for code generation.
+Rewrites preserve equality under this semantics,
+  while extraction must also enforce the ordering constraint.
+Congruence alone does not preserve effect safety:
+  substituting an equal subterm can create two operations that consume the same state.
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/03-overview.tex, Update example.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S3.}
+Figure~\ref{fig:effect-safe-example} illustrates the problem with a memory operation,
+  $\mathtt{Update}(a,x,\sigma)$.
+It writes $x$ to address $a$ in state $\sigma$ and returns
+  both the value previously stored there and the updated state.
+The original program performs four updates, named $C_1$ through $C_4$:
+\[
+  \begin{aligned}
+    C_1:\quad (v_1,\sigma_1)&=\mathtt{Update}(a,x,\sigma_0),\\
+    C_2:\quad (v_2,\sigma_2)&=\mathtt{Update}(a,x,\sigma_1),\\
+    C_3:\quad (v_3,\sigma_3)&=\mathtt{Update}(b,y,\sigma_2),\\
+    C_4:\quad (v_4,\sigma_4)&=\mathtt{Update}(c,v_2,\sigma_3).
+  \end{aligned}
+\]
+Here $a,b,c$ are memory addresses, $x,y$ are values, and $\sigma_0$ is the initial state.
+The second update repeats the first, so $\sigma_2=\sigma_1$ and $v_2=x$.
+Recording both equalities permits eliminating $C_2$ and passing $x$ directly to $C_4$.
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/figures/overviewcombinedcropped.pdf,
+% Figure 3; caption adapted from 03-overview.tex.
+\begin{figure}[tbp]
+  \sourcenote{Verbatim figure from \emph{Efficient Extraction for Effectful E-graphs},
+    Figure~3; edited caption.}
+  \centering
+  \includegraphics[width=\linewidth,pagebox=cropbox]{effect-safe-extraction.pdf}
+  \caption{A redundant update creates both effect-safe and effect-unsafe choices.
+    (I) The original program.
+    (II) The e-graph after adding the redundant-update equalities.
+    (III) An effect-unsafe term: $C_2$ and $C_3$ consume the same state.
+    (IV) An effect-safe term that removes $C_2$.
+    Operators point to their operands; bold arrows track state dependencies.
+    Bold outlines mark effectful terms.
+    Index $[0]$ selects an update's old value and $[1]$ its new state.
+    Gray shading and dotted lines mark equalities; red and green highlight
+    the unsafe and safe choices, respectively.}
+  \label{fig:effect-safe-example}
+\end{figure}
+
+% Source: same overview, effect-unsafe and effect-safe extractions;
+% aliasing example made explicit.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S3;
+  concrete aliasing case added.}
+The e-graph also permits replacing $\sigma_2$ with $\sigma_1$
+  while retaining $C_2$ to compute $v_2$.
+Now $C_2$ and $C_3$ consume the same state, as in Panel~III.
+Simply scheduling these operations in either order can change the result:
+  if $a=b$ and $x\ne y$, executing $C_3$ before $C_2$
+  makes $C_2$ return $y$ instead of $x$.
+Panel~IV avoids this problem by selecting both equalities together,
+  producing the statewalk $C_1,C_3,C_4$ and using $x$ for the last update.
+Extraction must therefore coordinate its choices across e-classes.
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/07-np.tex, hardness and fallback.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S5.}
+We prove that deciding whether a given e-class contains any effect-safe extraction
+  is NP-complete, even without a cost objective~\cite{eggcc}.
+An optimizer can retain its input program as an effect-safe fallback,
+  but its goal is to find an improved program among the alternatives.
+Choosing a cheap term independently for each e-class can combine incompatible
+  effect orders, and rejecting that combination can miss a valid extraction.
+
+\subsection{Statewalk DP and Statewalk Width}
+\label{sec:extraction-algorithm}
+
+% Sources: ../egg-papers/2026-OOPSLA-eggcc/03-overview.tex;
+% 06-tiger.tex, extractable sets and statewalk equivalence.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S\S3, 6.}
+Our key insight is that different statewalks can enable the same pure computations.
+For a statewalk, its \emph{extractable set} contains the pure e-classes
+  from which a term can be built using only the effects on that statewalk.
+Statewalk DP groups statewalks when their final terms belong to the same e-class
+  and their extractable sets are equal.
+Statewalks in the same group can replace one another when constructing further effect-safe terms.
+In Figure~\ref{fig:effect-safe-example}, $\sigma_2=\sigma_1$ lets a statewalk repeat $C_2$
+  any number of times.
+These statewalks all enable the same pure e-classes.
+Grouping them avoids enumerating all those repetitions.
+
+% Source: same overview and 06-tiger.tex, algorithm description.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S\S3, 6.}
+The algorithm uses a dynamic programming table to retain and reuse partial extractions.
+Each entry is indexed by an effectful e-class and an extractable set,
+  and stores a representative statewalk for that group.
+Starting from the input state, the algorithm extends a statewalk with an effectful operation
+  only when each of its pure operands can be extracted using that statewalk.
+It computes the new extractable set and records the resulting group.
+The implementation keeps a low-cost representative for each group,
+  using a priority queue to explore cheaper choices first.
+This preserves the compatibility information needed for future extensions
+  while avoiding separate searches for interchangeable statewalks.
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/06-tiger.tex, Complexity;
+% 03-overview.tex, width-one example.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S\S3, 6.}
+The \emph{statewalk width} $k$ is the largest number of distinct extractable sets
+  for statewalks ending in any one effectful e-class.
+The running example has width one, despite its unbounded number of statewalks.
+For an e-graph containing $n$ explicitly stored terms, finding any effect-safe extraction
+  takes $O(kn^2)$ time; prioritizing lower-cost choices adds a logarithmic factor.
+Thus the feasibility problem is \emph{fixed-parameter tractable} in statewalk width:
+  its running time is a function of $k$ times a polynomial in $n$
+  whose exponent does not depend on $k$.
+Width can be exponential in the worst case, but small width bounds how many
+  different compatibility requirements the algorithm must track.
+
+% Sources: ../egg-papers/2026-OOPSLA-eggcc/06-tiger-proofs.tex;
+% 08-impl.tex, Cost Model. New scope note for report length.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S\S6--7;
+  new scope note.}
+For the core dataflow language, we prove that statewalk DP terminates,
+  returns only effect-safe terms in the requested e-class,
+  and finds one whenever one exists.
+Its cost optimization is greedy and does not guarantee a globally minimum-cost program.
+For space, this report gives the algorithm's main ideas;
+  the full algorithm and correctness arguments appear in the paper~\cite{eggcc}.
+
+\subsection{Implementation and Evaluation}
+\label{sec:extraction-evaluation}
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/08-impl.tex,
+% Control Flow and Regions; The eggcc Program Optimizer.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S7.}
+We implement statewalk DP in \texttt{eggcc}, which optimizes programs written in Bril,
+  a simple imperative intermediate language.
+It translates Bril to RVSDGs, applies \texttt{egglog} rules, extracts an effect-safe RVSDG,
+  and translates the result back to Bril.
+To handle loops and conditionals, extraction decomposes the e-graph into
+  \emph{regionalized e-graphs}, each describing a single region with placeholders for nested regions.
+It runs statewalk DP on these smaller problems and recursively fills the placeholders.
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/10-eval.tex, Setup and RQ1;
+% values from nightly/jscomputedmacros.tex, checked against main-camera-ready.pdf.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S8.}
+We compare statewalk DP with ILP extraction under the same cost model.
+Across 96 benchmarks producing 9,610 regionalized e-graphs,
+  statewalk DP completes 92\% of extractions in under a millisecond and all within 61.9\,ms.
+Its geometric-mean speedup over the ILP solver Gurobi is $520\times$,
+  counting timeouts as five minutes and using reported solving times for infeasible instances.
+These figures measure extraction search, excluding the overhead of transferring and preparing e-graphs.
+
+% Sources: same evaluation, statewalk-width measurements;
+% 08-impl.tex, liveness and AC mitigation.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S\S7--8.}
+Statewalk width is one in 94.7\% of the measured Bril and PolyBench regions
+  and at most five in 98.4\%.
+Two outliers reach width 106,259 because independent memory reads admit many orderings.
+Dropping pure values that no future operation needs and restricting redundant read orderings
+  reduce the largest table for an e-class in the highest-width case to 24 entries.
+The parameter thus explains expensive instances and guides practical improvements.
+
+% Sources: same evaluation, RQ2; 10-eval-fenwick.tex, RQ3;
+% numerical speedup from nightly/jscomputedmacros.tex.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, \S8.}
+Where ILP extraction finishes, statewalk DP produces programs with similar measured runtimes.
+The prototype remains slower than the LLVM compiler on the benchmark-suite aggregates,
+  but it supports useful optimizations tailored to an application.
+For a Fenwick tree, a data structure for maintaining cumulative sums under updates,
+  we add three rules that replace a loop computing the lowest set bit of a positive integer $n$
+  with the bitwise expression $n\mathbin{\&}(-n)$.
+In this case study, the resulting program runs $6.52\times$ faster than LLVM with full
+  \texttt{-O3} optimization.
+These rules combine with memory and control-flow transformations to improve the executable program.
+
+\sourcenote{New connection to the proposed verified compiler.}
+Effect-safe extraction constructs candidates for the proposed compiler
+  in Section~\ref{sec:verified-compilation}, which must validate their effect ordering.
+It assumes the e-graph's equalities come from sound rewrites;
+  its correctness argument does not verify the rewrite rules or the complete compiler.
+Combining that guarantee with proofs of rewrites and analysis results,
+  and a verified checker, remains part of the proposed work.
+
+\subsection{Related Work}
+\label{sec:related-effects}
+
+% Sources: ../egg-papers/2020-big-paper/09-related.tex, Superoptimization;
+% ../egg-papers/2026-OOPSLA-eggcc/11-related.tex, Effect-safe Extraction in Peggy.
+\sourcenote{Edited from the related work of \emph{egg}
+  and \emph{Efficient Extraction for Effectful E-graphs}.}
+Peggy uses e-graphs to optimize programs with loops and conditionals,
+  then selects a program through constraint solving~\cite{peggy}.
+Translating that result back to a control-flow graph, which records possible transfers
+  of execution between instruction blocks, is a separate obligation~\cite{peg-cfg}.
+Our work makes effect safety an explicit extraction constraint and studies its complexity.
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/11-related.tex, Pure Extraction in Practice.
+% Julia comparison checked against arXiv:2502.17075v2, Section 3.3.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs}, related work;
+  Julia comparison updated from its paper.}
+Cranelift's e-graph design preserves effectful operations in the surrounding control-flow graph~\cite{aegraph}.
+The Julia optimizer likewise preserves that structure, while allowing marked rewrites to remove effectful calls~\cite{eqsat-julia}.
+These approaches restrict which effects extraction must reconstruct;
+  ours searches the e-graph for a valid effect ordering.
+
+% Source: ../egg-papers/2026-OOPSLA-eggcc/11-related.tex, Pure Extraction in Practice;
+% 01-introduction.tex, parameterized complexity discussion.
+\sourcenote{Edited from \emph{Efficient Extraction for Effectful E-graphs},
+  introduction and related work.}
+Even without effects, extraction becomes difficult when the cost model accounts for sharing.
+A cheap expression tree need not yield a cheap directed acyclic graph
+  when repeated computations are counted only once.
+Goharshady and colleagues give an optimal extraction algorithm
+  parameterized by e-graph \emph{treewidth}, a measure of how closely
+  the graph's connectivity resembles that of a tree~\cite{goharshady}.
+Sun and colleagues connect extraction to Boolean circuits
+  and obtain another algorithm parameterized by treewidth~\cite{glenn-treewidth}.
+These results show how structural parameters can make an otherwise hard extraction problem tractable.
+Our work applies this strategy to a different obstacle:
+  finding any effect-safe extraction, parameterized by statewalk width~\cite{eggcc}.

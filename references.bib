@@ -1,3 +1,632 @@
-% Add verified BibTeX entries here, then cite them using \cite{key}.
-% Uncomment the bibliography block at the end of main.tex after the first
-% citation is added. The bibliography uses the standard alpha style.
+% Paper metadata adapted from ../extended-egglog-paper/references.bib.
+% Primary sources are linked in each entry; abstract citations added 2026-11-17.
+% Cite entries with \cite{key}; main.tex uses the standard alpha style.
+
+@article{egglog,
+  author = {Zhang, Yihong and Wang, Yisu Remy and Flatt, Oliver and Cao, David
+            and Zucker, Philip and Rosenthal, Eli and Tatlock, Zachary and
+            Willsey, Max},
+  title = {Better Together: Unifying {Datalog} and Equality Saturation},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume = {7},
+  number = {PLDI},
+  articleno = {125},
+  numpages = {25},
+  year = {2023},
+  month = jun,
+  doi = {10.1145/3591239},
+  url = {https://doi.org/10.1145/3591239},
+}
+
+@article{egg,
+  author = {Willsey, Max and Nandi, Chandrakana and Wang, Yisu Remy and
+            Flatt, Oliver and Tatlock, Zachary and Panchekha, Pavel},
+  title = {{egg}: Fast and Extensible Equality Saturation},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume = {5},
+  number = {POPL},
+  articleno = {23},
+  numpages = {29},
+  year = {2021},
+  month = jan,
+  doi = {10.1145/3434304},
+  url = {https://doi.org/10.1145/3434304},
+}
+
+@inproceedings{szalinski,
+  author = {Nandi, Chandrakana and Willsey, Max and Anderson, Adam and
+            Wilcox, James R. and Darulova, Eva and Grossman, Dan and
+            Tatlock, Zachary},
+  title = {Synthesizing Structured {CAD} Models with Equality Saturation
+           and Inverse Transformations},
+  booktitle = {Proceedings of the 41st ACM SIGPLAN Conference on
+               Programming Language Design and Implementation},
+  series = {PLDI 2020},
+  year = {2020},
+  pages = {31--44},
+  publisher = {Association for Computing Machinery},
+  doi = {10.1145/3385412.3386012},
+  url = {https://doi.org/10.1145/3385412.3386012},
+}
+
+@inproceedings{caviar,
+  author = {Kourta, Smail and Namani, Adel Abderahmane and
+            Benbouzid-Si Tayeb, Fatima and Hazelwood, Kim and Cummins, Chris
+            and Leather, Hugh and Baghdadi, Riyadh},
+  title = {{Caviar}: An {E-Graph} Based {TRS} for Automatic Code Optimization},
+  booktitle = {Proceedings of the 31st ACM SIGPLAN International Conference
+               on Compiler Construction},
+  series = {CC 2022},
+  year = {2022},
+  pages = {54--64},
+  publisher = {Association for Computing Machinery},
+  doi = {10.1145/3497776.3517781},
+  url = {https://doi.org/10.1145/3497776.3517781},
+}
+
+@inproceedings{peggy,
+  author = {Tate, Ross and Stepp, Michael and Tatlock, Zachary and Lerner, Sorin},
+  title = {Equality Saturation: A New Approach to Optimization},
+  booktitle = {Proceedings of the 36th Annual ACM SIGPLAN-SIGACT Symposium
+               on Principles of Programming Languages},
+  series = {POPL 2009},
+  year = {2009},
+  pages = {264--276},
+  publisher = {Association for Computing Machinery},
+  doi = {10.1145/1480881.1480915},
+  url = {https://doi.org/10.1145/1480881.1480915},
+}
+
+@article{eggcc,
+  author = {Flatt, Oliver and Pal, Anjali and Zhang, Yihong and Tjoa, Ryan
+            and Graham, Kirsten and Fischman, Alex and Nandi, Chandrakana
+            and Rosenthal, Eli and Tatlock, Zachary and Ni, Haobin},
+  title = {Efficient Extraction for Effectful {E-graphs}},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume = {10},
+  number = {OOPSLA2},
+  articleno = {398},
+  numpages = {28},
+  year = {2026},
+  month = oct,
+  doi = {10.1145/3839530},
+  url = {https://doi.org/10.1145/3839530},
+}
+
+@article{slotted-egraphs,
+  author = {Schneider, Rudi and Rossel, Marcus and Shaikhha, Amir and
+            Goens, Andr{\'e}s and K{\oe}hler, Thomas and Steuwer, Michel},
+  title = {Slotted {E-Graphs}: First-Class Support for (Bound) Variables
+           in {E-Graphs}},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume = {9},
+  number = {PLDI},
+  articleno = {223},
+  numpages = {23},
+  year = {2025},
+  month = jun,
+  doi = {10.1145/3729326},
+  url = {https://doi.org/10.1145/3729326},
+}
+
+@inproceedings{eggproof,
+  author = {Flatt, Oliver and Coward, Samuel and Willsey, Max and
+            Tatlock, Zachary and Panchekha, Pavel},
+  title = {Small Proofs from Congruence Closure},
+  booktitle = {Proceedings of the 22nd Conference on Formal Methods
+               in Computer-Aided Design},
+  series = {FMCAD 2022},
+  editor = {Griggio, Alberto and Rungta, Neha},
+  year = {2022},
+  pages = {75--83},
+  publisher = {TU Wien Academic Press},
+  doi = {10.34727/2022/isbn.978-3-85448-053-2_13},
+  url = {https://doi.org/10.34727/2022/isbn.978-3-85448-053-2_13},
+}
+
+@misc{herbie-proofs,
+  author = {{Herbie Developers}},
+  title = {{Herbie} Related Papers},
+  howpublished = {\url{https://herbie.uwplse.org/papers.html}},
+  note = {{FMCAD}'22: Egg Proofs section. Accessed November 17, 2026},
+}
+
+% Prior proof-assistant integrations: Lean decoding in Section 5;
+% Coquetier's architecture and proof replay in dissertation Section 7.2.
+@article{lean-egg,
+  author = {Rossel, Marcus and Schneider, Rudi and K{\oe}hler, Thomas
+            and Steuwer, Michel and Goens, Andr{\'e}s},
+  title = {Towards Pen-and-Paper-Style Equational Reasoning in Interactive
+           Theorem Provers by Equality Saturation},
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume = {10},
+  number = {POPL},
+  articleno = {25},
+  numpages = {30},
+  year = {2026},
+  month = jan,
+  doi = {10.1145/3776667},
+  url = {https://doi.org/10.1145/3776667},
+}
+
+@phdthesis{coquetier,
+  author = {Bourgeat, Thomas},
+  title = {Specification and Verification of Sequential Machines
+           in Rule-Based Hardware Languages},
+  school = {Massachusetts Institute of Technology},
+  year = {2023},
+  month = feb,
+  url = {https://hdl.handle.net/1721.1/150194},
+}
+
+% Related-work references adapted from the eggcc, Small Proofs, and
+% extended-egglog bibliographies; publication metadata normalized.
+
+% Additional verified-compilation literature checked against primary papers.
+@inproceedings{translation-validation,
+  author = {Necula, George C.},
+  title = {Translation Validation for an Optimizing Compiler},
+  booktitle = {Proceedings of the ACM SIGPLAN Conference on Programming
+               Language Design and Implementation},
+  series = {PLDI 2000},
+  year = {2000},
+  pages = {83--94},
+  publisher = {Association for Computing Machinery},
+  doi = {10.1145/349299.349314},
+  url = {https://people.eecs.berkeley.edu/~necula/Papers/tv_pldi00.pdf},
+}
+
+@inproceedings{verified-lazy-code-motion,
+  author = {Tristan, Jean-Baptiste and Leroy, Xavier},
+  title = {Verified Validation of Lazy Code Motion},
+  booktitle = {Proceedings of the ACM SIGPLAN Conference on Programming
+               Language Design and Implementation},
+  series = {PLDI 2009},
+  year = {2009},
+  pages = {316--326},
+  publisher = {Association for Computing Machinery},
+  doi = {10.1145/1542476.1542512},
+  url = {https://jtristan.github.io/papers/pldi09.pdf},
+}
+
+@inproceedings{validated-register-allocation,
+  author = {Rideau, Silvain and Leroy, Xavier},
+  title = {Validating Register Allocation and Spilling},
+  booktitle = {Compiler Construction},
+  series = {Lecture Notes in Computer Science},
+  volume = {6011},
+  year = {2010},
+  pages = {224--243},
+  publisher = {Springer},
+  doi = {10.1007/978-3-642-11970-5_13},
+  url = {https://xavierleroy.org/publi/validation-regalloc.pdf},
+}
+
+@inproceedings{llvm-translation-validation,
+  author = {Stepp, Michael and Tate, Ross and Lerner, Sorin},
+  title = {Equality-Based Translation Validator for {LLVM}},
+  booktitle = {Computer Aided Verification},
+  series = {Lecture Notes in Computer Science},
+  volume = {6806},
+  year = {2011},
+  pages = {737--742},
+  publisher = {Springer},
+  doi = {10.1007/978-3-642-22110-1_59},
+  url = {https://cseweb.ucsd.edu/~lerner/papers/cav2011.pdf},
+}
+
+@inproceedings{alive2,
+  author = {Lopes, Nuno P. and Lee, Juneyoung and Hur, Chung-Kil
+            and Liu, Zhengyang and Regehr, John},
+  title = {{Alive2}: Bounded Translation Validation for {LLVM}},
+  booktitle = {Proceedings of the 42nd ACM SIGPLAN International Conference
+               on Programming Language Design and Implementation},
+  series = {PLDI 2021},
+  year = {2021},
+  pages = {65--79},
+  publisher = {Association for Computing Machinery},
+  doi = {10.1145/3453483.3454030},
+  url = {https://web.ist.utl.pt/nuno.lopes/pubs/alive2-pldi21.pdf},
+}
+
+@inproceedings{smtcoq,
+  author = {Ekici, Burak and Mebsout, Alain and Tinelli, Cesare and Keller, Chantal
+            and Katz, Guy and Reynolds, Andrew and Barrett, Clark},
+  title = {{SMTCoq}: A Plug-In for Integrating {SMT} Solvers into {Coq}},
+  booktitle = {Computer Aided Verification},
+  series = {Lecture Notes in Computer Science},
+  volume = {10427},
+  year = {2017},
+  pages = {126--133},
+  publisher = {Springer},
+  doi = {10.1007/978-3-319-63390-9_7},
+  url = {https://cvc4.github.io/publications/2017/EMT%2B17.pdf},
+}
+
+@inproceedings{pp-congr,
+  author = {Nieuwenhuis, Robert and Oliveras, Albert},
+  title = {Proof-Producing Congruence Closure},
+  booktitle = {Term Rewriting and Applications},
+  editor = {Giesl, J{\"u}rgen},
+  series = {Lecture Notes in Computer Science},
+  volume = {3467},
+  year = {2005},
+  pages = {453--468},
+  publisher = {Springer},
+  address = {Berlin, Heidelberg},
+  doi = {10.1007/978-3-540-32033-3_33},
+}
+
+% From Small Proofs from Congruence Closure's bibliography.
+@article{small-conflict,
+  author = {Fellner, Andreas and Fontaine, Pascal and Woltzenlogel Paleo, Bruno},
+  title = {{NP}-Completeness of Small Conflict Set Generation for Congruence Closure},
+  journal = {Formal Methods in System Design},
+  volume = {51},
+  year = {2017},
+  doi = {10.1007/s10703-017-0283-x},
+}
+
+@article{relational-ematching,
+  author = {Zhang, Yihong and Wang, Yisu Remy and Willsey, Max and Tatlock,
+            Zachary},
+  title = {Relational {E-Matching}},
+  journal = {Proc. ACM Program. Lang.},
+  volume = {6},
+  number = {POPL},
+  year = {2022},
+  month = jan,
+  articleno = {35},
+  numpages = {22},
+  doi = {10.1145/3498696},
+}
+
+@inproceedings{datalog-debugging,
+  author = {K{\"o}hler, Sven and Lud{\"a}scher, Bertram and Smaragdakis, Yannis},
+  title = {Declarative {Datalog} Debugging for Mere Mortals},
+  booktitle = {Datalog in Academia and Industry},
+  series = {Lecture Notes in Computer Science},
+  volume = {7494},
+  year = {2012},
+  pages = {111--122},
+  publisher = {Springer},
+  address = {Berlin, Heidelberg},
+  doi = {10.1007/978-3-642-32925-8_12},
+}
+
+@misc{provsql,
+  author = {Sen, Aryak and Maniu, Silviu and Senellart, Pierre},
+  title = {{ProvSQL}: A General System for Keeping Track of the Provenance and
+           Probability of Data},
+  year = {2025},
+  howpublished = {arXiv preprint arXiv:2504.12058v3},
+  url = {https://arxiv.org/abs/2504.12058v3},
+}
+
+@article{denali,
+  author = {Joshi, Rajeev and Nelson, Greg and Randall, Keith},
+  title = {Denali: A Goal-directed Superoptimizer},
+  journal = {SIGPLAN Not.},
+  issue_date = {May 2002},
+  volume = {37},
+  number = {5},
+  month = may,
+  year = {2002},
+  issn = {0362-1340},
+  pages = {304--314},
+  numpages = {11},
+  url = {http://doi.acm.org/10.1145/543552.512566},
+  doi = {10.1145/543552.512566},
+  acmid = {512566},
+  publisher = {ACM},
+  address = {New York, NY, USA},
+
+}
+
+@phdthesis{nelson,
+  author = {Nelson, Charles Gregory},
+  title = {Techniques for Program Verification},
+  year = {1980},
+  note = {AAI8011683},
+  school = {Stanford University},
+  address = {Stanford, CA, USA},
+}
+
+@misc{aegraph,
+  title = "{\ae}graphs: Acyclic E-graphs for Efficient Optimization in a Production
+           Compiler",
+  author = {Chris Fallin},
+  howpublished = {\url{https://cfallin.org/pubs/egraphs2023_aegraphs_slides.pdf}
+                  },
+  year = {2023},
+}
+
+@inproceedings{exspan,
+  author = {Zhou, Wenchao and Sherr, Micah and Tao, Tao and Li, Xiaozhou and Loo
+            , Boon Thau and Mao, Yun},
+  title = {Efficient Querying and Maintenance of Network Provenance at
+           Internet-Scale},
+  booktitle = {Proceedings of the 2010 ACM SIGMOD International Conference on
+               Management of Data},
+  year = {2010},
+  pages = {615--626},
+  publisher = {ACM},
+  address = {New York, NY, USA},
+  doi = {10.1145/1807167.1807234},
+}
+
+@inproceedings{semantic-foundations,
+  author = {Suciu, Dan and Wang, Yisu Remy and Zhang, Yihong},
+  title = {Semantic Foundations of Equality Saturation},
+  booktitle = {28th International Conference on Database Theory},
+  series = {Leibniz International Proceedings in Informatics},
+  volume = {328},
+  pages = {11:1--11:18},
+  year = {2025},
+  publisher = {Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+  doi = {10.4230/LIPIcs.ICDT.2025.11},
+  url = {https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ICDT.2025.11},
+}
+
+@inproceedings{nanopass,
+  author = {Keep, Andrew W. and Dybvig, R. Kent},
+  title = {A nanopass framework for commercial compiler development},
+  year = {2013},
+  isbn = {9781450323260},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  url = {https://doi.org/10.1145/2500365.2500618},
+  doi = {10.1145/2500365.2500618},
+
+  booktitle = {Proceedings of the 18th ACM SIGPLAN International Conference on
+               Functional Programming},
+  pages = {343--350},
+  numpages = {8},
+
+  location = {Boston, Massachusetts, USA},
+  series = {ICFP '13},
+}
+
+@article{rvsdg,
+  author = {Reissmann, Nico and Meyer, Jan Christian and Bahmann, Helge and Sj\"{a}lander, Magnus},
+  title = {{RVSDG}: An Intermediate Representation for Optimizing Compilers},
+  year = {2020},
+  issue_date = {November 2020},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  volume = {19},
+  number = {6},
+  issn = {1539-9087},
+  url = {https://doi.org/10.1145/3391902},
+  doi = {10.1145/3391902},
+
+  journal = {ACM Trans. Embed. Comput. Syst.},
+  month = {dec},
+  articleno = {49},
+  numpages = {28},
+
+}
+
+@techreport{peg-cfg,
+  author = {Tate, Ross and Stepp, Michael and Tatlock, Zachary and Lerner, Sorin},
+  title = {Translating between {PEG}s and {CFG}s},
+  institution = {University of California, San Diego},
+  year = {2010},
+  month = oct,
+  url = {http://www.cs.cornell.edu/~ross/publications/eqsat/}
+}
+
+@misc{eqsat-julia,
+      title={Equality Saturation for Optimizing High-Level {Julia IR}},
+      author={Jules Merckx and Tim Besard and Bjorn De Sutter},
+      year={2025},
+      eprint={2502.17075},
+      howpublished={arXiv preprint arXiv:2502.17075v2},
+      archivePrefix={arXiv},
+      primaryClass={cs.PL},
+      url={https://arxiv.org/abs/2502.17075},
+}
+
+@article{goharshady,
+  author = {Goharshady, Amir Kafshdar and Lam, Chun Kit and Parreaux, Lionel},
+  title = {Fast and Optimal Extraction for Sparse Equality Graphs},
+  year = {2024},
+  issue_date = {October 2024},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  volume = {8},
+  number = {OOPSLA2},
+  url = {https://doi.org/10.1145/3689801},
+  doi = {10.1145/3689801},
+
+  journal = {Proc. ACM Program. Lang.},
+  month = oct,
+  articleno = {361},
+  numpages = {27},
+
+}
+
+@misc{glenn-treewidth,
+      title={E-Graphs as Circuits, and Optimal Extraction via Treewidth},
+      author={Glenn Sun and Yihong Zhang and Haobin Ni},
+      year={2024},
+      eprint={2408.17042},
+      howpublished={arXiv preprint arXiv:2408.17042v2},
+      archivePrefix={arXiv},
+      primaryClass={cs.DS},
+      url={https://arxiv.org/abs/2408.17042},
+}
+
+@article{compcert-backend,
+  author = {Leroy, Xavier},
+  title = {A Formally Verified Compiler Back-end},
+  journal = {J. Autom. Reason.},
+  volume = {43},
+  number = {4},
+  year = {2009},
+  pages = {363--446},
+  doi = {10.1007/s10817-009-9155-4},
+}
+
+@misc{verified-egraphs,
+  author = {Jamner, Dustin and Askerbekov, Tilek and Chlipala, Adam},
+  title = {Verified {E-Graphs} for Automating Compiler Verification},
+  year = {2027},
+  month = jan,
+  note = {Forthcoming at POPL 2027; cited from the authors' abstract},
+  url = {https://adam.chlipala.net/papers/EgraphsPOPL27/},
+}
+
+@article{nanopass2,
+  author = {Ballantyne, Michael and Gamburg, Mitch and Hemann, Jason},
+  title = {Compiled, Extensible, Multi-language {DSLs} (Functional Pearl)},
+  year = {2024},
+  issue_date = {August 2024},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  volume = {8},
+  number = {ICFP},
+  url = {https://doi.org/10.1145/3674627},
+  doi = {10.1145/3674627},
+
+  journal = {Proc. ACM Program. Lang.},
+  month = aug,
+  articleno = {238},
+  numpages = {24},
+
+}
+
+% Author order from ../extended-egglog-paper/production/authors.tex.
+% Submission status supplied by Oliver; no publication venue claimed.
+@unpublished{extended-egglog,
+  author = {Flatt, Oliver and Shanabrook, Saul and Schneider, Rudi and
+            Rosenthal, Eli and Steuwer, Michel and Nandi, Chandrakana and
+            Tatlock, Zachary},
+  title = {Extended {E-Graphs} via Compilation},
+  year = {2026},
+  note = {Manuscript under submission},
+}
+
+% Metadata from ../extended-egglog-paper/references.bib.
+@article{dis-equality-graphs,
+  author = {Zakhour, George and Weisenburger, Pascal and Cesario, Jahrim
+            Gabriele and Salvaneschi, Guido},
+  title = {{Dis/Equality Graphs}},
+  journal = {Proc. ACM Program. Lang.},
+  volume = {9},
+  number = {POPL},
+  year = {2025},
+  month = jan,
+  articleno = {77},
+  numpages = {24},
+  doi = {10.1145/3704913},
+}
+
+@inproceedings{lmfao,
+  author = {Schleich, Maximilian and Olteanu, Dan and Abo Khamis, Mahmoud and
+            Ngo, Hung Q. and Nguyen, XuanLong},
+  title = {A Layered Aggregate Engine for Analytics Workloads},
+  booktitle = {Proceedings of the 2019 International Conference on
+               Management of Data},
+  series = {SIGMOD '19},
+  year = {2019},
+  publisher = {ACM},
+  doi = {10.1145/3299869.3324961},
+  url = {https://doi.org/10.1145/3299869.3324961},
+}
+
+@article{sdql,
+  author = {Shaikhha, Amir and Huot, Mathieu and Smith, Jaclyn and Olteanu, Dan},
+  title = {Functional Collection Programming with Semi-ring Dictionaries},
+  journal = {Proc. ACM Program. Lang.},
+  volume = {6},
+  number = {OOPSLA1},
+  year = {2022},
+  month = apr,
+  articleno = {89},
+  numpages = {33},
+  doi = {10.1145/3527333},
+  url = {https://doi.org/10.1145/3527333},
+}
+
+% Section 6 case-study sources, checked against primary sources on 2026-11-20.
+@misc{compcert-doc,
+  author = {Leroy, Xavier and {the CompCert development team}},
+  title = {The {CompCert} Verified Compiler: Commented {Coq} Development},
+  year = {2026},
+  note = {Version 3.18; accessed November 20, 2026},
+  url = {https://compcert.org/doc/},
+}
+
+@inproceedings{netkat,
+  author = {Anderson, Carolyn Jane and Foster, Nate and Guha, Arjun and
+            Jeannin, Jean-Baptiste and Kozen, Dexter and Schlesinger, Cole and
+            Walker, David},
+  title = {{NetKAT}: Semantic Foundations for Networks},
+  booktitle = {Proceedings of the 41st ACM SIGPLAN-SIGACT Symposium on
+               Principles of Programming Languages},
+  series = {POPL 2014},
+  year = {2014},
+  publisher = {ACM},
+  doi = {10.1145/2535838.2535862},
+  url = {https://www.cs.cornell.edu/~kozen/Papers/NetKAT.pdf},
+}
+
+@article{katch,
+  author = {Moeller, Mark and Jacobs, Jules and Savary Belanger, Olivier and
+            Darais, David and Schlesinger, Cole and Smolka, Steffen and
+            Foster, Nate and Silva, Alexandra},
+  title = {{KATch}: A Fast Symbolic Verifier for {NetKAT}},
+  journal = {Proc. ACM Program. Lang.},
+  volume = {8},
+  number = {PLDI},
+  year = {2024},
+  month = jun,
+  articleno = {224},
+  numpages = {24},
+  doi = {10.1145/3656454},
+  url = {https://www.cs.cornell.edu/~moeller/pdf/katch.pdf},
+}
+
+@misc{luminal,
+  author = {{Luminal contributors}},
+  title = {Luminal: Inference at the Speed of Light},
+  year = {2026},
+  howpublished = {Source repository},
+  note = {README and dependency declarations accessed November 20, 2026},
+  url = {https://github.com/luminal-ai/luminal},
+}
+
+@misc{luminal-megakernels,
+  author = {Samost, Jonah and Fioti, Joe},
+  title = {Compiling Models to Megakernels},
+  year = {2026},
+  month = jan,
+  howpublished = {Luminal Blog},
+  url = {https://blog.luminal.com/p/compiling-models-to-megakernels},
+}
+
+@inproceedings{xcert,
+  author = {Tatlock, Zachary and Lerner, Sorin},
+  title = {Bringing Extensibility to Verified Compilers},
+  booktitle = {Proceedings of the ACM SIGPLAN Conference on Programming
+               Language Design and Implementation},
+  series = {PLDI 2010},
+  year = {2010},
+  publisher = {ACM},
+  url = {https://www.cs.cornell.edu/~lerner/papers/pldi10-xcert.pdf},
+}
+
+@inproceedings{verified-rewriting,
+  author = {Gross, Jason and Erbsen, Andres and Philipoom, Jade and
+            Poddar-Agrawal, Miraya and Chlipala, Adam},
+  title = {Accelerating Verified-Compiler Development with a Verified Rewriting Engine},
+  booktitle = {13th International Conference on Interactive Theorem Proving},
+  series = {Leibniz International Proceedings in Informatics},
+  volume = {237},
+  year = {2022},
+  pages = {17:1--17:18},
+  publisher = {Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r Informatik},
+  doi = {10.4230/LIPIcs.ITP.2022.17},
+  url = {https://drops.dagstuhl.de/entities/document/10.4230/LIPIcs.ITP.2022.17},
+}
